@@ -21,5 +21,8 @@
   "bugs": {
     "url": "https://github.com/MaheshaKulatunga/IW_Assignment/issues"
   },
-  "homepage": "https://github.com/MaheshaKulatunga/IW_Assignment#readme"
+  "homepage": "https://github.com/MaheshaKulatunga/IW_Assignment#readme",
+  "dependencies": {
+    "twitter": "^1.7.0"
+  }
 }

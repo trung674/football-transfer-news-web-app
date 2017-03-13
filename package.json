@@ -1,0 +1,25 @@
+{
+  "name": "iw_assignment",
+  "version": "0.0.0",
+  "description": "Intelligent Web Assignment",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MaheshaKulatunga/IW_Assignment.git"
+  },
+  "keywords": [
+    "twitter",
+    "footballer",
+    "intelligent",
+    "web"
+  ],
+  "author": "Mahesha Kulatunga, Thanh Trung Nguyen, Omorefe Imoloame",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/MaheshaKulatunga/IW_Assignment/issues"
+  },
+  "homepage": "https://github.com/MaheshaKulatunga/IW_Assignment#readme"
+}

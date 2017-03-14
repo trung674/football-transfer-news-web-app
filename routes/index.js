@@ -30,11 +30,11 @@ connection.connect(function(err){
   console.log('Connection established');
 });
 
-//connection.query('SELECT * FROM tweet', function (error, results, fields) {
-  //if (error) throw error;
+connection.query('SELECT * FROM query', function (error, results, fields) {
+  if (error) throw error;
 
-  //console.log(results)
-//});
+  console.log(results)
+});
 
 
 /* GET home page. */
@@ -47,6 +47,13 @@ router.post('/', function(req, res, next) {
   if (req.body.team) var team = req.body.team;
   if (req.body.author) var author = req.body.author;
   var query = player + ' AND ' + team;
+  var currentdate = new Date();
+  var datetime = currentdate.getDate() + "-"
+                + (currentdate.getMonth()+1)  + "-"
+                + currentdate.getFullYear() + " @ "
+                + currentdate.getHours() + ":"
+                + currentdate.getMinutes() + ":"
+                + currentdate.getSeconds();
   T.get('search/tweets', { q: query, count: 5 }, function(err, data, response) {
 
     for(tweet = 0; tweet < data.statuses.length; tweet++){
@@ -56,11 +63,19 @@ router.post('/', function(req, res, next) {
       var created_at = new Date(data.statuses[tweet].created_at)
       var created_at_str = created_at.toISOString().substring(0, 19).replace('T', ' ')
 
-      var post  = {tweet_id: tweet_id, tweet_text: tweet_text, username: username, created_at: created_at};
-      var query = connection.query('INSERT INTO tweet SET ?', post, function (error, results, fields) {
+      var post  = {tweet_id: tweet_id, tweet_text: tweet_text, username: username, created_at: created_at_str};
+      connection.query('INSERT INTO tweet SET ?', post, function (error, results, fields) {
         if (error) throw error;
       });
       console.log(query.sql)
+    }
+    if(data.statuses.length>0){
+    var message  = {query_text: query, player_name: player, team: team, author:author};
+    connection.query('INSERT INTO query SET ?',message, function (error, results, fields) {
+      if (error) throw error;
+    });
+    console.log(query.sql)
+
     }
     res.render('index', {query: query, tweets: data.statuses});
   });

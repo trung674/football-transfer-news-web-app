@@ -30,6 +30,13 @@ connection.connect(function(err){
   console.log('Connection established');
 });
 
+//connection.query('SELECT * FROM tweet', function (error, results, fields) {
+  //if (error) throw error;
+
+  //console.log(results)
+//});
+
+
 /* GET home page. */
 router.get('/', function(req, res, next) {
   res.render('index', { title: 'EMT Football Tweets' });
@@ -40,10 +47,21 @@ router.post('/', function(req, res, next) {
   if (req.body.team) var team = req.body.team;
   if (req.body.author) var author = req.body.author;
   var query = player + ' AND ' + team;
-  T.get('search/tweets', { q: query, count: 1 }, function(err, data, response) {
-    console.log(data.statuses[0]);
-    console.log(typeof data.statuses[0]);
+  T.get('search/tweets', { q: query, count: 5 }, function(err, data, response) {
 
+    for(tweet = 0; tweet < data.statuses.length; tweet++){
+      var tweet_id = data.statuses[tweet].id_str
+      var tweet_text = data.statuses[tweet].text
+      var username = data.statuses[tweet].user.screen_name
+      var created_at = new Date(data.statuses[tweet].created_at)
+      var created_at_str = created_at.toISOString().substring(0, 19).replace('T', ' ')
+
+      var post  = {tweet_id: tweet_id, tweet_text: tweet_text, username: username, created_at: created_at};
+      var query = connection.query('INSERT INTO tweet SET ?', post, function (error, results, fields) {
+        if (error) throw error;
+      });
+      console.log(query.sql)
+    }
     res.render('index', {query: query, tweets: data.statuses});
   });
 

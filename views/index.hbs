@@ -9,15 +9,15 @@
     <div class="col-md-4 col-md-offset-4 search-section">
       <div class="panel">
         <div class="panel-body">
-          <form>
+          <form action="/" method="POST">
             <div class="form-group">
-              <input type="text" class="form-control" id="playerName" placeholder="Player (eg. Rooney, @waynerooney)">
+              <input type="text" class="form-control" name="player" id="playerName" placeholder="Player (eg. Rooney, @waynerooney)">
             </div>
             <div class="form-group">
-              <input type="text" class="form-control" id="teamName" placeholder="Team (eg. @manutd, #manutd)">
+              <input type="text" class="form-control" name="team" id="teamName" placeholder="Team (eg. @manutd, #manutd)">
             </div>
             <div class="form-group">
-              <input type="text" class="form-control" id="authorName" placeholder="Author (eg.@waynerooney)">
+              <input type="text" class="form-control" name="author" id="authorName" placeholder="Author (eg.@waynerooney)">
             </div>
             <button type="submit" class="btn btn-primary search-button">Search</button>
           </form>
@@ -27,11 +27,27 @@
 
     <!-- Search Result -->
   <div class= "col-md-12 results-section">
-    <h3> Search results for "example"</h3>
+    {{#if query}}
+      <h3> Search results for "{{query}}"</h3>
+    {{/if}}
   </div>
+  {{#each tweets }}
+    <div class="container col-md-12">
+       <div class="panel panel-success">
+         <!-- Search team name via DBPedia I think -->
+         <div class="panel-heading">{{this.user.name}} | Team </div>
+         <div class="panel-body">
+           <p>Original Tweet: {{this.text}}</p>
+           <p> Author: {{this.user.screen_name}}</p>
+         </div>
+         <div class="panel-success panel-footer">
+           <p> Time and date: {{this.created_at}} </p>
+         </div>
+       </div>
+     </div>
+  {{/each}}
 
-
-  <div class="container col-md-12">
+  <!-- <div class="container col-md-12">
      <div class="panel panel-success">
        <div class="panel-heading">Player Name | Team </div>
        <div class="panel-body">
@@ -69,4 +85,4 @@
          </div>
        </div>
      </div>
-</div>
+</div> -->

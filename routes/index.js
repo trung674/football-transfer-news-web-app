@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
-require('dotenv').config()
+require('dotenv').config();
+var configDB = require('../config/database');
 
 var Twit = require('twit')
 var mysql = require('mysql')
@@ -15,10 +16,10 @@ var T = new Twit({
 
 
 var connection = mysql.createConnection({
-  host     : 'stusql.dcs.shef.ac.uk',
-  user     : 'team087',
-  password : 'c827b3fd',
-  database : 'team087'
+  host     : configDB.host,
+  user     : configDB.user,
+  password : configDB.password,
+  database : configDB.database
 });
 
 connection.connect(function(err){
@@ -40,9 +41,8 @@ router.post('/', function(req, res, next) {
   if (req.body.author) var author = req.body.author;
   var query = player + ' AND ' + team;
   T.get('search/tweets', { q: query, count: 1 }, function(err, data, response) {
-
-
-
+    console.log(data.statuses[0]);
+    console.log(typeof data.statuses[0]);
 
     res.render('index', {query: query, tweets: data.statuses});
   });

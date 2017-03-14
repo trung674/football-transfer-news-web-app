@@ -1,7 +1,10 @@
 var express = require('express');
 var router = express.Router();
 require('dotenv').config()
+
 var Twit = require('twit')
+var mysql = require('mysql')
+
 var T = new Twit({
   consumer_key:         process.env.TWIT_CONSUMER_KEY,
   consumer_secret:      process.env.TWIT_CONSUMER_SECRET,
@@ -9,6 +12,22 @@ var T = new Twit({
   access_token_secret:  process.env.TWIT_ACCES_SECRET,
   timeout_ms:           60*1000,  // optional HTTP request timeout to apply to all requests.
 })
+
+
+var connection = mysql.createConnection({
+  host     : 'stusql.dcs.shef.ac.uk',
+  user     : 'team087',
+  password : 'c827b3fd',
+  database : 'team087'
+});
+
+connection.connect(function(err){
+  if(err){
+    console.log('Error connecting to Db');
+    return;
+  }
+  console.log('Connection established');
+});
 
 /* GET home page. */
 router.get('/', function(req, res, next) {

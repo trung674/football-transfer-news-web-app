@@ -20,8 +20,11 @@ router.post('/', function(req, res, next) {
   if (req.body.team) var team = req.body.team;
   if (req.body.author) var author = req.body.author;
   var query = player + ' AND ' + team;
-  T.get('search/tweets', { q: query, count: 5 }, function(err, data, response) {
-    console.log(response);
+  T.get('search/tweets', { q: query, count: 1 }, function(err, data, response) {
+
+
+
+
     res.render('index', {query: query, tweets: data.statuses});
   });
 

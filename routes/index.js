@@ -18,18 +18,18 @@ var connection = mysql.createConnection({host: configDB.host, user: configDB.use
 
 connection.connect(function(err) {
     if (err) {
-        console.log('Error connecting to Db');
+        console.log('Error connecting to Db' + err);
         return;
     }
     console.log('Connection established');
 });
 
-connection.query('SELECT * FROM query', function(error, results, fields) {
-    if (error)
-        throw error;
-
-    console.log(results)
-});
+// connection.query('SELECT * FROM query', function(error, results, fields) {
+//     if (error)
+//         throw error;
+//
+//     console.log(results)
+// });
 
 //connection.query('SELECT * FROM tweet', function (error, results, fields) {
 //  if (error) throw error;
@@ -42,7 +42,7 @@ router.get('/', function(req, res, next) {
 });
 
 router.post('/', function(req, res, next) {
-    if (req.body.player) var player = req.body.player;
+    if (req.body.player) var player = req.body. player;
     if (req.body.team)   var team = req.body.team;
     if (req.body.author) var author = req.body.author;
     var query = player + ' AND ' + team;
@@ -83,10 +83,6 @@ router.post('/', function(req, res, next) {
         }
 
         if (data.statuses.length > 0) {
-            if (req.body.player) var player = req.body.player;
-            if (req.body.team)   var team = req.body.team;
-            if (req.body.author) var author = req.body.author;
-            var query = player + ' AND ' + team;
             var message = {
                 query_text: query,
                 player_name: player,

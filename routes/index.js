@@ -45,64 +45,76 @@ router.post('/', function(req, res, next) {
     // The Twitter Search API can only search tweets that are published in the past 7 days
     // source: https://dev.twitter.com/rest/public/search
     var query = '';
-    if (req.body.player) query = query + req.body.player;
-    if (req.body.team) query = query + ' AND ' + req.body.team;
-    if (req.body.author) query = query + ' from:' + req.body.author.replace (/@/g, "");
-    T.get('search/tweets', {
-        q: query,
-        count: 5
-    }, function(err, data, response) {;
-        for (tweet = 0; tweet < data.statuses.length; tweet++) {
+    if (req.body.player) {
+      var player = req.body.player;
+      query = query + player;
+    }
+    if (req.body.team) {
+      var team = req.body.team;
+      query = query + ' AND ' + team;
+    }
+    if (req.body.author) {
+      var author = req.body.author.replace (/@/g, "")
+      query = query + ' from:' + author;
+    }
+    if (query !== '') {
+      T.get('search/tweets', {
+          q: query,
+          count: 5
+      }, function(err, data, response) {
+          for (tweet = 0; tweet < data.statuses.length; tweet++) {
 
-            var tweet_id = data.statuses[tweet].id_str
+              var tweet_id = data.statuses[tweet].id_str
 
-            var check = connection.query('SELECT * FROM tweet WHERE tweet_id =' + tweet_id, function(error, results, fields) {
-                if (error)
-                    throw error;
-                }
-            );
+              var check = connection.query('SELECT * FROM tweet WHERE tweet_id =' + tweet_id, function(error, results, fields) {
+                  if (error)
+                      throw error;
+                  }
+              );
 
-            if (check.results = null) {
-                var tweet_text = data.statuses[tweet].text
-                var username = data.statuses[tweet].user.screen_name
-                var created_at = new Date(data.statuses[tweet].created_at)
-                var created_at_str = created_at.toISOString().substring(0, 19).replace('T', ' ')
+              if (check.results = null) {
+                  var tweet_text = data.statuses[tweet].text
+                  var username = data.statuses[tweet].user.screen_name
+                  var created_at = new Date(data.statuses[tweet].created_at)
+                  var created_at_str = created_at.toISOString().substring(0, 19).replace('T', ' ')
 
-                var post = {
-                    tweet_id: tweet_id,
-                    tweet_text: tweet_text,
-                    username: username,
-                    created_at: created_at
-                };
-                var query = connection.query('INSERT INTO tweet SET ?', post, function(error, results, fields) {
-                    if (error)
-                        throw error;
-                    }
-                );
-                console.log(query.sql)
-            }
-        }
+                  var post = {
+                      tweet_id: tweet_id,
+                      tweet_text: tweet_text,
+                      username: username,
+                      created_at: created_at
+                  };
+                  var query = connection.query('INSERT INTO tweet SET ?', post, function(error, results, fields) {
+                      if (error)
+                          throw error;
+                      }
+                  );
+                  console.log(query.sql)
+              }
+          }
 
-        if (data.statuses.length > 0) {
-            var message = {
-                query_text: query,
-                player_name: player,
-                team: team,
-                author: author
-            };
-            connection.query('INSERT INTO query SET ?', message, function(error, results, fields) {
-                if (error)
-                    throw error;
-                }
-            );
+          if (data.statuses.length > 0) {
+              var message = {
+                  query_text: query,
+                  player_name: player,
+                  team: team,
+                  author: author
+              };
+              connection.query('INSERT INTO query SET ?', message, function(error, results, fields) {
+                  if (error)
+                      throw error;
+                  }
+              );
 
-        }
-        res.render('index', {
-            query: query,
-            tweets: data.statuses
-        });
-    });
-
+          }
+          res.render('index', {
+              query: query,
+              tweets: data.statuses
+          });
+      });
+    } else {
+      res.render('index', {message: 'Empty string'});
+    }
 });
 
 module.exports = router;

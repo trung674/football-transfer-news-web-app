@@ -9,6 +9,9 @@
     <div class="col-md-4 col-md-offset-4 search-section">
       <div class="panel">
         <div class="panel-body">
+          {{#if message }}
+            <div class="alert alert-danger" role="alert">{{message}} is not allowd. Please try again !</div>
+          {{/if}}
           <form action="/" method="POST">
             <div class="form-group">
               <input type="text" class="form-control" name="player" id="playerName" placeholder="Player (eg. Rooney, @waynerooney)">
@@ -24,7 +27,6 @@
         </div>
       </div>
     </div>
-
     <!-- Search Result -->
   <div class= "col-md-12 results-section">
   {{#if query}}

@@ -18,11 +18,11 @@ var app = express();
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'hbs');
 hbs.registerHelper('formatDate', function(object) {
-  var d = new Date(object).toDateString();
-  // var date = d.getDate();
-  // var month = d.getMonth() + 1;
-  // var year = d.getYear();
-  return d;
+  var d = new Date(object);
+  var hour = d.getHours();
+  var minute = (d.getMinutes() < 10?'0':'') + d.getMinutes();
+  var d_str = hour + ':' + minute + ' ' + d.toDateString();
+  return d_str;
 });
 // uncomment after placing your favicon in /public
 app.use(favicon(path.join(__dirname, 'public', 'images', 'favicon.ico')));

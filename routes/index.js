@@ -42,7 +42,7 @@ router.get('/', function(req, res, next) {
 });
 
 router.post('/', function(req, res, next) {
-    if (req.body.player) var player = req.body. player;
+    if (req.body.player) var player = req.body.player;
     if (req.body.team)   var team = req.body.team;
     if (req.body.author) var author = req.body.author;
     var query = player + ' AND ' + team;

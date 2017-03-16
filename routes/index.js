@@ -49,15 +49,20 @@ router.post('/', function(req, res, next) {
       var player = req.body.player;
       query = query + player;
     }
+    
     if (req.body.team) {
       var team = req.body.team;
       query = query + ' AND ' + team;
     }
+
     if (req.body.author) {
       var author = req.body.author.replace (/@/g, "")
       query = query + ' from:' + author;
     }
+
     if (query !== '') {
+
+
       T.get('search/tweets', {
           q: query,
           count: 5
@@ -84,12 +89,13 @@ router.post('/', function(req, res, next) {
                       username: username,
                       created_at: created_at
                   };
-                  var query = connection.query('INSERT INTO tweet SET ?', post, function(error, results, fields) {
+                  // there's no need to insert this into a variable
+                  connection.query('INSERT INTO tweet SET ?', post, function(error, results, fields) {
                       if (error)
                           throw error;
                       }
                   );
-                  console.log(query.sql)
+
               }
           }
 

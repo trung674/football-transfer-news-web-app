@@ -42,15 +42,16 @@ router.get('/', function(req, res, next) {
 });
 
 router.post('/', function(req, res, next) {
-    if (req.body.player) var player = req.body.player;
-    if (req.body.team)   var team = req.body.team;
-    if (req.body.author) var author = req.body.author;
-    var query = player + ' AND ' + team;
+    // The Twitter Search API can only search tweets that are published in the past 7 days
+    // source: https://dev.twitter.com/rest/public/search
+    var query = '';
+    if (req.body.player) query = query + req.body.player;
+    if (req.body.team) query = query + ' AND ' + req.body.team;
+    if (req.body.author) query = query + ' from:' + req.body.author.replace (/@/g, "");
     T.get('search/tweets', {
         q: query,
         count: 5
-    }, function(err, data, response) {
-
+    }, function(err, data, response) {;
         for (tweet = 0; tweet < data.statuses.length; tweet++) {
 
             var tweet_id = data.statuses[tweet].id_str

@@ -14,15 +14,15 @@ var T = new Twit({
     timeout_ms: 60 *1000, // optional HTTP request timeout to apply to all requests.
 })
 
-// var connection = mysql.createConnection({host: configDB.host, user: configDB.user, password: configDB.password, database: configDB.database});
-//
-// connection.connect(function(err) {
-//     if (err) {
-//         console.log('Error connecting to Db' + err);
-//         return;
-//     }
-//     console.log('Connection established');
-// });
+var connection = mysql.createConnection({host: configDB.host, user: configDB.user, password: configDB.password, database: configDB.database});
+
+connection.connect(function(err) {
+    if (err) {
+        console.log('Error connecting to Db' + err);
+        return;
+    }
+    console.log('Connection established');
+});
 
 // connection.query('SELECT * FROM query', function(error, results, fields) {
 //     if (error)

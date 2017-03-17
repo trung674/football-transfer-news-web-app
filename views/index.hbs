@@ -27,31 +27,42 @@
         </div>
       </div>
     </div>
-    <!-- Search Result -->
+  <!-- Search Result -->
   <div class= "col-md-12 results-section">
   {{#if query}}
     <h3> Search results for "{{query}}"</h3>
+  </div>
 
+
+  {{#if tweets}}
+    <!-- Frequency Analysis  -->
+    <div class="col-md-12">
+      <div class="panel panel-default">
+        <div class="panel-heading">Frequency Analysis</div>
+        <div class="panel-body">
+          {{{formatArray classifiedTweets}}}
+        </div>
+      </div>
     </div>
-    {{#if tweets}}
-      {{#each tweets }}
-        <div hidden class="container col-md-12 tweet-container">
-           <div class="panel panel-success">
-             <!-- Search team name via DBPedia I think -->
-             <div class="panel-heading"><a href="https://www.twitter.com/{{this.user.screen_name}}">{{this.user.name}} @{{this.user.screen_name}}</a></div>
-             <div class="panel-body">
-              <a href="https://www.twitter.com/{{this.user.screen_name}}/status/{{this.id_str}}">Original Tweet</a>
-              <p>{{this.text}}</P>
-             </div>
-             <div class="panel-success panel-footer">
-               <p> Time and date: {{{formatDate this.created_at}}} </p>
-             </div>
+    <!-- Display Tweets  -->
+    {{#each tweets }}
+      <div hidden class="col-md-12 tweet-container">
+         <div class="panel panel-success">
+           <!-- Search team name via DBPedia I think -->
+           <div class="panel-heading"><a href="https://www.twitter.com/{{this.user.screen_name}}">{{this.user.name}} @{{this.user.screen_name}}</a></div>
+           <div class="panel-body">
+            <a href="https://www.twitter.com/{{this.user.screen_name}}/status/{{this.id_str}}">Original Tweet</a>
+            <p>{{this.text}}</P>
+           </div>
+           <div class="panel-success panel-footer">
+             <p> Time and date: {{{formatDate this.created_at}}} </p>
            </div>
          </div>
-      {{/each}}
-    {{else}}
-      <div class="container col-md-12">
-        No tweet matches your query. Please try again !
-      </div>
-    {{/if}}
+       </div>
+    {{/each}}
+  {{else}}
+    <div class="container col-md-12">
+      No tweet matches your query. Please try again !
+    </div>
   {{/if}}
+{{/if}}

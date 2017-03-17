@@ -24,6 +24,16 @@ hbs.registerHelper('formatDate', function(object) {
   var d_str = hour + ':' + minute + ' ' + d.toDateString();
   return d_str;
 });
+
+hbs.registerHelper('formatArray', function(object) {
+  var str = "<ul>";
+  object.forEach(function(array) {
+    var date = new Date(array[0].created_at).toDateString();
+    var length = array.length;
+      str = str + "<li><b>" + date + "</b>: " + length + " " + (length == 1? "tweet": "tweets") +"</li>"
+  });
+  return str + "</ul>";
+});
 // uncomment after placing your favicon in /public
 app.use(favicon(path.join(__dirname, 'public', 'images', 'favicon.ico')));
 app.use(logger('dev'));

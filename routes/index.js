@@ -47,12 +47,12 @@ router.post('/', function(req, res, next) {
     var query = '';
     if (req.body.player) {
       var player = req.body.player;
-      query = query + player + " OR " + completeQuery(player);
+      query = query + player + " OR " + splitQuery(player);
     }// + " OR " + completeQuery(player,1)
 
     if (req.body.team) {
       var team = req.body.team;
-      query = query + ' AND ' + team + " OR " + completeQuery(team);
+      query = query + ' AND ' + team + " OR " + splitQuery(team);
     }// + " OR " + completeQuery(team,1)
 
     if (req.body.author) {
@@ -151,7 +151,7 @@ function classifyTweets(dates, tweets, array) {
   return array;
 }
 
-function completeQuery(queryString) {
+function splitQuery(queryString) {
   var words = queryString.split(" ");
   var fullQuery = ""
 

@@ -125,11 +125,12 @@ router.post('/', function(req, res, next) {
     } else {
       res.render('index', {message: 'Empty string'});
     }
-});
+}); 
 
 module.exports = router;
 
 function findUniqueDates(tweets) {
+  // return the dates that tweets were created
   var array = tweets.statuses.map(function(tweet) {return new Date(tweet.created_at)});
   var list = [array[0].getDate()];
   for (var i = 1; i < array.length; i++) {

@@ -47,16 +47,16 @@ router.post('/', function(req, res, next) {
     var query = '';
     if (req.body.player) {
       var player = req.body.player;
-      query = query + player;
-    }
+      query = query + player + " OR " + splitQuery(player);
+    }// + " OR " + completeQuery(player,1)
 
     if (req.body.team) {
       var team = req.body.team;
-      query = query + ' AND ' + team;
-    }
+      query = query + ' AND ' + team + " OR " + splitQuery(team);
+    }// + " OR " + completeQuery(team,1)
 
     if (req.body.author) {
-      var author = req.body.author.replace (/@/g, "")
+      var author = req.body.author.replace(/@/g, "")
       query = query + ' from:' + author;
     }
 
@@ -151,3 +151,19 @@ function classifyTweets(dates, tweets, array) {
   });
   return array;
 }
+
+function splitQuery(queryString) {
+  var words = queryString.split(" ");
+  var fullQuery = ""
+
+  for (word = 0; word < words.length; word++){
+    if (word == words.length - 1){
+      fullQuery = fullQuery + words[word]
+    }
+    else{
+      fullQuery = fullQuery + words[word] + " OR "
+    }
+  }
+
+  return (fullQuery)
+ }

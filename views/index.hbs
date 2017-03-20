@@ -49,11 +49,8 @@
       <div hidden class="col-md-12 tweet-container">
          <div class="panel panel-success">
            <!-- Search team name via DBPedia I think -->
-           <div class="panel-heading"><a href="https://www.twitter.com/{{this.user.screen_name}}">{{this.user.name}} @{{this.user.screen_name}}</a></div>
-           <div class="panel-body">
-            <a href="https://www.twitter.com/{{this.user.screen_name}}/status/{{this.id_str}}">Original Tweet</a>
-            <p>{{this.text}}</P>
-           </div>
+           <div class="panel-heading"><a href="https://www.twitter.com/{{this.user.screen_name}}" target="_blank">{{this.user.name}} @{{this.user.screen_name}}</a></div>
+           <a class="tweet-text" href="https://www.twitter.com/{{this.user.screen_name}}/status/{{this.id_str}}" target="_blank"><div class="panel-body tweet-link-div">{{this.text}}</div></a>
            <div class="panel-success panel-footer">
              <p> Time and date: {{{formatDate this.created_at}}} </p>
            </div>

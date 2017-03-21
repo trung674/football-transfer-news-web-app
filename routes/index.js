@@ -36,6 +36,8 @@ connection.query('SELECT * FROM tweet', function (error, results, fields) {
   console.log(results)
 });
 
+
+
 /* GET home page. */
 router.get('/', function(req, res, next) {
     res.render('index', {title: 'EMT Football Tweets'});
@@ -69,37 +71,6 @@ router.post('/', function(req, res, next) {
           q: query,
           count: 100
       }, function(err, data, response) {
-          for (tweet = 0; tweet < data.statuses.length; tweet++) {
-
-              var tweet_id = data.statuses[tweet].id_str
-
-              var check = connection.query('SELECT * FROM tweet WHERE tweet_id =' + mysql.escape(tweet_id), function(error, results, fields) {
-                  if (error)
-                      throw error;
-                  }
-              );
-              console.log(typeof check.results)
-
-              if (check.results = null) {
-                  var tweet_text = data.statuses[tweet].text
-                  var username = data.statuses[tweet].user.screen_name
-                  var created_at = new Date(data.statuses[tweet].created_at)
-                  var created_at_str = created_at.toISOString().substring(0, 19).replace('T', ' ')
-
-                  var post = {
-                      tweet_id: tweet_id,
-                      tweet_text: tweet_text,
-                      username: username,
-                      created_at: created_at
-                  };
-                  // there's no need to insert this into a variable
-                  connection.query('INSERT INTO tweet SET ?', mysql.escape(post), function(error, results, fields) {
-                      if (error)
-                          throw error;
-                      }
-                  );
-              }
-          }
 
           var classifiedTweets = [];
           if (data.statuses.length > 0) {
@@ -109,18 +80,17 @@ router.post('/', function(req, res, next) {
                 classifiedTweets = classifyTweets(dateList, data, classifiedTweets);
               }
 
-              var message = {
-                  query_text: query,
-                  player_name: player,
-                  team: team,
-                  author: author
-              };
-              connection.query('INSERT INTO query SET ?',message, function(error, results, fields) {
-                  if (error)
-                      throw error;
-                  }
-              );
+              insertQuery(data, query, player, team, author)
+
           }
+
+          for (t = 0; t < data.statuses.length; t++) {
+
+            insertTweets(data,t);
+
+          }
+
+
           res.render('index', {
               query: query,
               tweets: data.statuses,
@@ -138,8 +108,6 @@ router.post('/', function(req, res, next) {
                  else{
 
                       id = JSON.parse(JSON.stringify(results));
-
-                      console.log(id)
                       my_query = id[Object.keys(id).length - 1].query_id
 
                  }
@@ -160,13 +128,11 @@ router.post('/', function(req, res, next) {
              else{
 
                   id = JSON.parse(JSON.stringify(results));
-
-                  console.log(id)
                   my_query = id[Object.keys(id).length - 1].query_id
              }
          }
          );
-    
+
 
      }
 
@@ -179,6 +145,70 @@ router.post('/', function(req, res, next) {
 });
 
 module.exports = router;
+
+function insertTweets(data, t){
+
+  connection.query('SELECT query_id FROM query ORDER BY created_at DESC LIMIT 1;', function (error, results, fields) {
+    if (error) {
+      throw error;
+    }
+    var tweet_id = data.statuses[t].id_str
+    var tweet_text = data.statuses[t].text
+    var username = data.statuses[t].user.screen_name
+    var created_at = new Date(data.statuses[t].created_at)
+    var created_at_str = created_at.toISOString().substring(0, 19).replace('T', ' ')
+    var query_id = results[0].query_id
+    console.log(results[0].query_id);
+
+    var post = {
+        tweet_id: tweet_id,
+        tweet_text: tweet_text,
+        username: username,
+        created_at: created_at,
+        query_id: query_id
+    };
+
+    var check = connection.query('SELECT * FROM tweet WHERE tweet_id =' + mysql.escape(tweet_id), function(error, results, fields) {
+        if (error){
+            throw error;
+        }
+        if (results.length === 0) {
+
+            // there's no need to insert this into a variable
+            connection.query('INSERT INTO tweet SET ?', post, function(error, results, fields) {
+                if (error){
+                    throw error;
+                }
+                else {
+                  //console.log('tweet_inserted')
+                }
+                }
+            );
+        }
+        }
+    );
+  });
+
+
+}
+
+function insertQuery(data, query, player, team, author){
+    var message = {
+        query_text: query,
+        player_name: player,
+        team: team,
+        author: author
+    };
+    connection.query('INSERT INTO query SET ?',message, function(error, results, fields) {
+        if (error) {
+            throw error;
+        }
+        else {
+          //console.log('query_inserted')
+        }
+        }
+    );
+}
 
 function findUniqueDates(tweets) {
   // return the dates that tweets were created

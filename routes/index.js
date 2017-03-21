@@ -78,7 +78,7 @@ router.post('/', function(req, res, next) {
                 var dateList = findUniqueDates(data);
                 classifiedTweets = classifyTweets(dateList, data, classifiedTweets);
               }
-
+              console.log(typeof data.statuses)
               insertQuery(data, query, player, team, author)
 
           }
@@ -100,7 +100,7 @@ router.post('/', function(req, res, next) {
   else{
      if (team !==''){
        var id = []
-         var check = connection.query('SELECT query_id FROM query WHERE player_name LIKE = ? AND team LIKE =?',[player,team], function(error, results, fields) {
+         var check = connection.query('SELECT query_id FROM query WHERE player_name = ? AND team = ?',[player,team], function(error, results, fields) {
              if (error){
                  throw error;
                }
@@ -108,6 +108,12 @@ router.post('/', function(req, res, next) {
 
                       id = JSON.parse(JSON.stringify(results));
                       my_query = id[Object.keys(id).length - 1].query_id
+                      console.log(my_query)
+
+                      connection.query('SELECT * FROM tweet WHERE query_id = ?',my_query, function (error, results, fields) {
+                        if (error) throw error;
+                        console.log(results)
+                      });
 
                  }
 
@@ -128,12 +134,20 @@ router.post('/', function(req, res, next) {
 
                   id = JSON.parse(JSON.stringify(results));
                   my_query = id[Object.keys(id).length - 1].query_id
+
+                  connection.query('SELECT * FROM tweet WHERE query_id = ?',my_query, function (error, results, fields) {
+                    if (error) throw error;
+                    console.log(results[0].username)
+
+                    res.render('index', {query: query, tweets: results});
+                  });
              }
          }
          );
 
 
      }
+
 
 
 
@@ -171,7 +185,6 @@ function insertTweets(data, t){
         }
         if (results.length === 0) {
 
-            // there's no need to insert this into a variable
             connection.query('INSERT INTO tweet SET ?', post, function(error, results, fields) {
                 if (error){
                     throw error;

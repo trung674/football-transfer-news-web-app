@@ -33,9 +33,8 @@ connection.connect(function(err) {
 
 connection.query('SELECT * FROM tweet', function (error, results, fields) {
   if (error) throw error;
-  console.log(results)
+  //console.log(results)
 });
-
 
 
 /* GET home page. */
@@ -147,7 +146,6 @@ router.post('/', function(req, res, next) {
 module.exports = router;
 
 function insertTweets(data, t){
-
   connection.query('SELECT query_id FROM query ORDER BY created_at DESC LIMIT 1;', function (error, results, fields) {
     if (error) {
       throw error;
@@ -158,7 +156,6 @@ function insertTweets(data, t){
     var created_at = new Date(data.statuses[t].created_at)
     var created_at_str = created_at.toISOString().substring(0, 19).replace('T', ' ')
     var query_id = results[0].query_id
-    console.log(results[0].query_id);
 
     var post = {
         tweet_id: tweet_id,
@@ -168,7 +165,7 @@ function insertTweets(data, t){
         query_id: query_id
     };
 
-    var check = connection.query('SELECT * FROM tweet WHERE tweet_id =' + mysql.escape(tweet_id), function(error, results, fields) {
+    connection.query('SELECT * FROM tweet WHERE tweet_id =' + mysql.escape(tweet_id), function(error, results, fields) {
         if (error){
             throw error;
         }

@@ -35,8 +35,6 @@
   {{#if query}}
     <h3> Search results for "{{query}}"</h3>
   </div>
-
-
   {{#if tweets}}
     <!-- Frequency Analysis  -->
     <div class="col-md-12">
@@ -61,14 +59,9 @@
        </div>
     {{/each}}
   {{else}}
-    <div class="container col-md-12">
-      No tweet matches your query. Please try again !
-    </div>
-  {{/if}}
-
-  {{#if results}}
+  {{#if DBtweets}}
     <!-- Display Tweets  -->
-    {{#each results}}
+    {{#each DBtweets}}
       <div hidden class="col-md-12 tweet-container">
          <div class="panel panel-success">
            <!-- Search team name via DBPedia I think -->
@@ -84,5 +77,6 @@
     <div class="container col-md-12">
       No tweet matches your query. Please try again !
     </div>
+  {{/if}}
   {{/if}}
 {{/if}}

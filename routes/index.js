@@ -139,7 +139,7 @@ router.post('/', function(req, res, next) {
                     if (error) throw error;
                     console.log(results[0].username)
 
-                    res.render('index', {query: query, tweets: results});
+                    res.render('index', {query: query, DBtweets: results});
                   });
              }
          }

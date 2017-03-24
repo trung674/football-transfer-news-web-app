@@ -73,23 +73,20 @@ router.post('/', function(req, res, next) {
 
           var classifiedTweets = [];
           if (data.statuses.length > 0) {
+
               // Frequency Analysis
               if (data.statuses.length > 0 ) {
                 var dateList = findUniqueDates(data);
                 classifiedTweets = classifyTweets(dateList, data, classifiedTweets);
               }
-              console.log(typeof data.statuses)
+
               insertQuery(data, query, player, team, author)
-
           }
-
           for (t = 0; t < data.statuses.length; t++) {
 
             insertTweets(data,t);
 
           }
-
-
           res.render('index', {
               query: query,
               tweets: data.statuses,
@@ -98,59 +95,7 @@ router.post('/', function(req, res, next) {
       });
   }
   else{
-     if (team !==''){
-       var id = []
-         var check = connection.query('SELECT query_id FROM query WHERE player_name = ? AND team = ?',[player,team], function(error, results, fields) {
-             if (error){
-                 throw error;
-               }
-                 else{
-
-                      id = JSON.parse(JSON.stringify(results));
-                      my_query = id[Object.keys(id).length - 1].query_id
-                      console.log(my_query)
-
-                      connection.query('SELECT * FROM tweet WHERE query_id = ?',my_query, function (error, results, fields) {
-                        if (error) throw error;
-                        console.log(results)
-                      });
-
-                 }
-
-             }
-
-
-         );
-
-     }
-     else{
-       var id = []
-
-         var past = connection.query('SELECT query_id FROM query WHERE player_name = ?',  req.body.player, function(error, results, fields) {
-             if (error){
-                 throw error;
-             }
-             else{
-
-                  id = JSON.parse(JSON.stringify(results));
-                  my_query = id[Object.keys(id).length - 1].query_id
-
-                  connection.query('SELECT * FROM tweet WHERE query_id = ?',my_query, function (error, results, fields) {
-                    if (error) throw error;
-                    console.log(results[0].username)
-
-                    res.render('index', {query: query, DBtweets: results});
-                  });
-             }
-         }
-         );
-
-
-     }
-
-
-
-
+    getDBResults(player, team, query, req, res);
   }
     } else {
       res.render('index', {message: 'Empty string'});
@@ -218,6 +163,55 @@ function insertQuery(data, query, player, team, author){
         }
         }
     );
+}
+
+function getDBResults (player, team, query, req, res){
+  if (team !==''){
+    var id = []
+      var check = connection.query('SELECT query_id FROM query WHERE player_name = ? AND team = ?',[player,team], function(error, results, fields) {
+          if (error){
+              throw error;
+            }
+              else{
+
+                   id = JSON.parse(JSON.stringify(results));
+                   my_query = id[Object.keys(id).length - 1].query_id
+
+                   connection.query('SELECT * FROM tweet WHERE query_id = ?',my_query, function (error, results, fields) {
+                     if (error) throw error;
+                   });
+
+              }
+
+          }
+
+
+      );
+
+  }
+  else{
+    var id = []
+
+      var past = connection.query('SELECT query_id FROM query WHERE player_name = ?',  req.body.player, function(error, results, fields) {
+          if (error){
+              throw error;
+          }
+          else{
+
+               id = JSON.parse(JSON.stringify(results));
+               my_query = id[Object.keys(id).length - 1].query_id
+
+               connection.query('SELECT * FROM tweet WHERE query_id = ?',my_query, function (error, results, fields) {
+                 if (error) throw error;
+
+                 res.render('index', {query: query, DBtweets: results});
+               });
+          }
+      }
+      );
+
+
+  }
 }
 
 function findUniqueDates(tweets) {

@@ -45,17 +45,18 @@ router.get('/', function(req, res, next) {
 router.post('/', function(req, res, next) {
     // The Twitter Search API can only search tweets that are published in the past 7 days
     // source: https://dev.twitter.com/rest/public/search
-    var query = '';
+    var basicKW = 'transfer OR buy OR bid OR moving OR move AND ';
+    var query = basicKW;
     var team = '';
 
     if (req.body.player) {
       player=req.body.player;
-      query = query + player + " OR " + splitQuery(player);
+      query = query + player //+ " OR " + splitQuery(player);
     }// + " OR " + completeQuery(player,1)
 
     if (req.body.team) {
       team = req.body.team;
-      query = query + ' AND ' + team + " OR " + splitQuery(team);
+      query = query + ' AND ' + team //+ " OR " + splitQuery(team);
     }// + " OR " + completeQuery(team,1)
 
     if (req.body.author) {
@@ -63,7 +64,7 @@ router.post('/', function(req, res, next) {
       query = query + ' from:' + author;
     }
 
-    if (query !== '') {
+    if (query !== basicKW) {
 
       if (req.body.api){
       T.get('search/tweets', {
@@ -87,8 +88,11 @@ router.post('/', function(req, res, next) {
             insertTweets(data,t);
 
           }
+          console.log(query)
           res.render('index', {
               query: query,
+              player: player,
+              team: team,
               tweets: data.statuses,
               classifiedTweets: classifiedTweets
           });

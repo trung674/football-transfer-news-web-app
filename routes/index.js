@@ -24,12 +24,11 @@ connection.connect(function(err) {
     console.log('Connection established');
 });
 
-// connection.query('SELECT * FROM query', function(error, results, fields) {
-//     if (error)
-//         throw error;
-//
-//     console.log(results)
-// });
+ connection.query('SELECT DISTINCT player_name,team FROM query WHERE player_name LIKE "%ronaldo%" ORDER BY created_at DESC LIMIT 3;', function(error, results, fields) {
+     if (error)
+         throw error;
+     //console.log(results)
+});
 
 connection.query('SELECT * FROM tweet', function (error, results, fields) {
   if (error) throw error;
@@ -80,22 +79,14 @@ router.post('/', function(req, res, next) {
                 var dateList = findUniqueDates(data);
                 classifiedTweets = classifyTweets(dateList, data, classifiedTweets);
               }
-
               insertQuery(data, query, player, team, author)
           }
           for (t = 0; t < data.statuses.length; t++) {
-
             insertTweets(data,t);
 
           }
-          console.log(query)
-          res.render('index', {
-              query: query,
-              player: player,
-              team: team,
-              tweets: data.statuses,
-              classifiedTweets: classifiedTweets
-          });
+          getRecommendations(data.statuses, player, team, query, req, res, classifiedTweets)
+
       });
   }
   else{
@@ -177,31 +168,23 @@ function getDBResults (player, team, query, req, res){
               throw error;
             }
               else{
-
                    id = JSON.parse(JSON.stringify(results));
                    my_query = id[Object.keys(id).length - 1].query_id
 
                    connection.query('SELECT * FROM tweet WHERE query_id = ?',my_query, function (error, results, fields) {
                      if (error) throw error;
                    });
-
               }
-
           }
-
-
       );
-
   }
   else{
     var id = []
-
-      var past = connection.query('SELECT query_id FROM query WHERE player_name = ?',  req.body.player, function(error, results, fields) {
+    var past = connection.query('SELECT query_id FROM query WHERE player_name = ?',  req.body.player, function(error, results, fields) {
           if (error){
               throw error;
           }
           else{
-
                id = JSON.parse(JSON.stringify(results));
                my_query = id[Object.keys(id).length - 1].query_id
 
@@ -211,10 +194,49 @@ function getDBResults (player, team, query, req, res){
                  res.render('index', {query: query, DBtweets: results});
                });
           }
-      }
+      });
+  }
+}
+
+function getRecommendations(tweets, player, team, query, req, res, classifiedTweets) {
+  if (team !==''){
+    var id = []
+      var check = connection.query('SELECT DISTINCT player_name,team FROM query WHERE player_name LIKE "%'+player+'%" AND team LIKE "%'+team+'%" ORDER BY created_at DESC LIMIT 3;',[player,team], function(error, results, fields) {
+          if (error){
+              throw error;
+            }
+              else{
+                   console.log(results)
+                   res.render('index', {
+                       query: query,
+                       player: player,
+                       team: team,
+                       tweets: tweets,
+                       classifiedTweets: classifiedTweets,
+                       recommendations: results
+                   });
+              }
+          }
       );
+  }
+  else{
+    var id = []
+      var past = connection.query('SELECT DISTINCT player_name,team FROM query WHERE player_name LIKE "%'+req.body.player+'%" ORDER BY created_at DESC LIMIT 3;',  req.body.player, function(error, results, fields) {
+          if (error){
+              throw error;
+          }
+          else{
 
-
+               res.render('index', {
+                   query: query,
+                   player: player,
+                   team: team,
+                   tweets: tweets,
+                   classifiedTweets: classifiedTweets,
+                   recommendations: results
+               });
+          }
+      });
   }
 }
 
@@ -253,6 +275,5 @@ function splitQuery(queryString) {
       fullQuery = fullQuery + words[word] + " OR "
     }
   }
-
   return (fullQuery)
  }

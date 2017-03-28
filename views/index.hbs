@@ -29,6 +29,21 @@
           </form>
         </div>
       </div>
+      {{#if recommendations}}
+      <div class = "container col-sm-12">
+        <ol class="rec-list">
+          <li class="rec-heading"> People also searched for: </li>
+          {{#each recommendations}}
+            {{#if this.player_name}}
+              <li> {{this.player_name}},</li>
+            {{/if}}
+            {{#if this.team}}
+              <li> {{this.team}}, </li>
+            {{/if}}
+          {{/each}}
+        </ol>
+      </div>
+      {{/if}}
     </div>
   <!-- Search Result -->
   <div class= "col-md-12 results-section">

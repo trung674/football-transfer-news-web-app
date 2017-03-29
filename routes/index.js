@@ -42,8 +42,6 @@ router.get('/', function(req, res, next) {
 });
 
 router.post('/', function(req, res, next) {
-    // The Twitter Search API can only search tweets that are published in the past 7 days
-    // source: https://dev.twitter.com/rest/public/search
     var basicKW = 'transfer OR buy OR bid OR moving OR move AND ';
     var query = basicKW;
     var team = '';
@@ -66,27 +64,53 @@ router.post('/', function(req, res, next) {
     if (query !== basicKW) {
 
       if (req.body.api){
+      var tweetCollection = [];
+      // Welcome to callback hell
       T.get('search/tweets', {
           q: query,
           count: 100
       }, function(err, data, response) {
-
-          var classifiedTweets = [];
-          if (data.statuses.length > 0) {
-
-              // Frequency Analysis
-              if (data.statuses.length > 0 ) {
-                var dateList = findUniqueDates(data);
-                classifiedTweets = classifyTweets(dateList, data, classifiedTweets);
+        tweetCollection.concat(data.statuses);
+        T.get('search/tweets', {
+          max_id: data.statuses.pop().id_str,
+          q: query,
+          count: 100
+        }, function(err1, data1, response1) { 
+          // remove duplicate tweet
+          data1.statuses.shift();
+          tweetCollection.concat(data1.statuses);
+          T.get('search/tweets', {
+            max_id: data1.statuses.pop().id_str,
+            q: query,
+            count: 100
+          }, function(err2, data2, response2) {
+            // remove duplicate tweet
+            data2.statuses.shift();
+            tweetCollection.concat(data2.statuses);
+            // 4th call to compensate for removing dupicate tweets
+            T.get('search/tweets', {
+              max_id: data2.statuses.pop().id_str,
+              q: query,
+              count: 3
+            }, function(err3, data3, response3) {
+              // remove duplicate tweet
+              data3.statuses.shift();
+              tweetCollection.concat(data3.statuses);
+              var classifiedTweets = [];
+              if (data.statuses.length > 0) {
+                // Frequency Analysis                 
+                var dateList = findUniqueDates(tweetCollection);
+                classifiedTweets = classifyTweets(dateList, tweetCollection, classifiedTweets);
+                insertQuery(tweetCollection, query, player, team, author);
               }
-              insertQuery(data, query, player, team, author)
-          }
-          for (t = 0; t < data.statuses.length; t++) {
-            insertTweets(data,t);
+              for (t = 0; t < tweetCollection.length; t++) {
+                insertTweets(tweetCollection,t);
 
-          }
-          getRecommendations(data.statuses, player, team, query, req, res, classifiedTweets)
-
+              }
+              getRecommendations(tweetCollection, player, team, query, req, res, classifiedTweets);
+            });  
+          });
+        });    
       });
   }
   else{
@@ -138,8 +162,6 @@ function insertTweets(data, t){
         }
     );
   });
-
-
 }
 
 function insertQuery(data, query, player, team, author){
@@ -242,7 +264,7 @@ function getRecommendations(tweets, player, team, query, req, res, classifiedTwe
 
 function findUniqueDates(tweets) {
   // return the dates that tweets were created
-  var array = tweets.statuses.map(function(tweet) {return new Date(tweet.created_at)});
+  var array = tweets.map(function(tweet) {return new Date(tweet.created_at)});
   var list = [array[0].getDate()];
   for (var i = 1; i < array.length; i++) {
     var date = array[i].getDate();
@@ -255,7 +277,7 @@ function findUniqueDates(tweets) {
 
 function classifyTweets(dates, tweets, array) {
   dates.forEach(function(date) {
-    var tempArray = tweets.statuses.filter(function(tweet){
+    var tempArray = tweets.filter(function(tweet){
       return (new Date(tweet.created_at).getDate() == date);
     });
     array.push(tempArray);

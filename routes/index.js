@@ -5,6 +5,8 @@ var configDB = require('../config/database');
 
 var Twit = require('twit')
 var mysql = require('mysql')
+var app = require('../app');
+
 
 var T = new Twit({
     consumer_key: process.env.TWIT_CONSUMER_KEY,
@@ -13,6 +15,27 @@ var T = new Twit({
     access_token_secret: process.env.TWIT_ACCES_SECRET,
     timeout_ms: 60 *1000, // optional HTTP request timeout to apply to all requests.
 })
+/*
+var client = new Twitter({
+    consumer_key: process.env.TWIT_CONSUMER_KEY,
+    consumer_secret: process.env.TWIT_CONSUMER_SECRET,
+    access_token_key: process.env.TWIT_ACCESS,
+    access_token_secret: process.env.TWIT_ACCES_SECRET,
+    timeout_ms: 60 *1000, // optional HTTP request timeout to apply to all requests.
+})
+
+client.stream('statuses/filter', {track: 'Messi'}, function(stream){
+  stream.on('data', function(tweet){
+    console.log(tweet.text)
+  });
+
+  stream.on('error',function(error){
+    throw error;
+  });
+})
+*/
+
+
 
 var connection = mysql.createConnection({host: configDB.host, user: configDB.user, password: configDB.password, database: configDB.database});
 
@@ -30,6 +53,8 @@ connection.connect(function(err) {
      //console.log(results)
 });
 
+
+
 connection.query('SELECT * FROM tweet', function (error, results, fields) {
   if (error) throw error;
   //console.log(results)
@@ -40,10 +65,10 @@ connection.query('SELECT * FROM tweet', function (error, results, fields) {
 router.get('/', function(req, res, next) {
     res.render('index', {title: 'EMT Football Tweets'});
 });
-
+var query = ''
 router.post('/', function(req, res, next) {
     var basicKW = 'transfer OR buy OR bid OR moving OR move AND ';
-    var query = basicKW;
+    query = basicKW;
     var team = '';
 
     if (req.body.player) {
@@ -62,6 +87,8 @@ router.post('/', function(req, res, next) {
     }
 
     if (query !== basicKW) {
+      var stream = T.stream('statuses/sample', { track: query })
+
 
       if (req.body.api){
       var tweetCollection = [];
@@ -112,6 +139,9 @@ router.post('/', function(req, res, next) {
 
               }
               getRecommendations(tweetCollection, player, team, query, req, res, classifiedTweets);
+
+
+
             });
           });
         });
@@ -125,7 +155,17 @@ router.post('/', function(req, res, next) {
     }
 });
 
+
+console.log(query);
+streamTweets(query);
 module.exports = router;
+
+function streamTweets(query){
+  var stream = T.stream('statuses/filter', { track: query  })
+  stream.on('tweet', function (tweet) {
+    console.log(tweet.text);
+  })
+}
 
 function insertTweets(data, t){
   connection.query('SELECT query_id FROM query ORDER BY created_at DESC LIMIT 1;', function (error, results, fields) {

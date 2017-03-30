@@ -1,4 +1,5 @@
 var express = require('express');
+var app = express();
 var path = require('path');
 var favicon = require('serve-favicon');
 var logger = require('morgan');
@@ -11,7 +12,9 @@ var index = require('./routes/index');
 var users = require('./routes/users');
 
 
-var app = express();
+
+var server = require('http').Server(app);
+var io = require('socket.io')(server)
 
 
 // view engine setup
@@ -67,6 +70,10 @@ app.use(function(err, req, res, next) {
   // render the error page
   res.status(err.status || 500);
   res.render('error');
+});
+
+io.on('connection', function(socket){
+  console.log('a user connected');
 });
 
 module.exports = app;

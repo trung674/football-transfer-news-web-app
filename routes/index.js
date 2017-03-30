@@ -70,15 +70,19 @@ router.post('/', function(req, res, next) {
           q: query,
           count: 100
       }, function(err, data, response) {
-        tweetCollection.concat(data.statuses);
+
+
+
+        tweetCollection = tweetCollection.concat(data.statuses);
+
         T.get('search/tweets', {
           max_id: data.statuses.pop().id_str,
           q: query,
           count: 100
-        }, function(err1, data1, response1) { 
+        }, function(err1, data1, response1) {
           // remove duplicate tweet
           data1.statuses.shift();
-          tweetCollection.concat(data1.statuses);
+          tweetCollection =tweetCollection.concat(data1.statuses);
           T.get('search/tweets', {
             max_id: data1.statuses.pop().id_str,
             q: query,
@@ -91,14 +95,18 @@ router.post('/', function(req, res, next) {
             T.get('search/tweets', {
               max_id: data2.statuses.pop().id_str,
               q: query,
-              count: 3
+              count: 100
             }, function(err3, data3, response3) {
               // remove duplicate tweet
               data3.statuses.shift();
-              tweetCollection.concat(data3.statuses);
+              tweetCollection = tweetCollection.concat(data3.statuses);
               var classifiedTweets = [];
               if (data.statuses.length > 0) {
-                // Frequency Analysis                 
+                console.log(data.statuses.length);
+                console.log(data1.statuses.length);
+                console.log(data2.statuses.length);
+                console.log(data3.statuses.length);
+                // Frequency Analysis
                 var dateList = findUniqueDates(tweetCollection);
                 classifiedTweets = classifyTweets(dateList, tweetCollection, classifiedTweets);
                 insertQuery(tweetCollection, query, player, team, author);
@@ -108,9 +116,9 @@ router.post('/', function(req, res, next) {
 
               }
               getRecommendations(tweetCollection, player, team, query, req, res, classifiedTweets);
-            });  
+            });
           });
-        });    
+        });
       });
   }
   else{
@@ -128,10 +136,10 @@ function insertTweets(data, t){
     if (error) {
       throw error;
     }
-    var tweet_id = data.statuses[t].id_str
-    var tweet_text = data.statuses[t].text
-    var username = data.statuses[t].user.screen_name
-    var created_at = new Date(data.statuses[t].created_at)
+    var tweet_id = data[t].id_str
+    var tweet_text = data[t].text
+    var username = data[t].user.screen_name
+    var created_at = new Date(data[t].created_at)
     var created_at_str = created_at.toISOString().substring(0, 19).replace('T', ' ')
     var query_id = results[0].query_id
 

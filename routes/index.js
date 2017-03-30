@@ -102,10 +102,6 @@ router.post('/', function(req, res, next) {
               tweetCollection = tweetCollection.concat(data3.statuses);
               var classifiedTweets = [];
               if (data.statuses.length > 0) {
-                console.log(data.statuses.length);
-                console.log(data1.statuses.length);
-                console.log(data2.statuses.length);
-                console.log(data3.statuses.length);
                 // Frequency Analysis
                 var dateList = findUniqueDates(tweetCollection);
                 classifiedTweets = classifyTweets(dateList, tweetCollection, classifiedTweets);

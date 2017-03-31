@@ -23,21 +23,33 @@
               <input type="text" class="form-control" name="author" id="authorName" placeholder="Author (eg.@waynerooney)">
             </div>
             <div class="form-group">
-              <input type="radio" class="form-control" name="database" id="checkDatabase"> Past Results
-              <input type="radio" class="form-control" name="api" id="checkDatabase">Current Results
+              <input type="checkbox" class="form-control" name="api" id="checkDatabase" checked="checked">Live results
             </div>
             <button type="submit" class="btn btn-primary search-button">Search</button>
           </form>
         </div>
       </div>
+      {{#if recommendations}}
+      <div class = "container col-sm-12">
+        <ol class="rec-list">
+          <li class="rec-heading"> People also searched for: </li>
+          {{#each recommendations}}
+            {{#if this.player_name}}
+              <li> {{this.player_name}},</li>
+            {{/if}}
+            {{#if this.team}}
+              <li> {{this.team}}, </li>
+            {{/if}}
+          {{/each}}
+        </ol>
+      </div>
+      {{/if}}
     </div>
   <!-- Search Result -->
   <div class= "col-md-12 results-section">
   {{#if query}}
-    <h3> Search results for "{{query}}"</h3>
+    <h3> Search results for "{{player}} {{team}} {{author}}" </h3>
   </div>
-
-
   {{#if tweets}}
     <!-- Frequency Analysis  -->
     <div class="col-md-12">
@@ -50,11 +62,26 @@
     </div>
     <!-- Display Tweets  -->
     {{#each tweets }}
-      <div hidden class="col-md-12 tweet-container">
+      <div hidden class="col-md-12 tweet-container"  id='tweets-list'>
          <div class="panel panel-success">
            <!-- Search team name via DBPedia I think -->
            <div class="panel-heading"><a href="https://www.twitter.com/{{this.user.screen_name}}" target="_blank">{{this.user.name}} @{{this.user.screen_name}}</a></div>
            <a class="tweet-text" href="https://www.twitter.com/{{this.user.screen_name}}/status/{{this.id_str}}" target="_blank"><div class="panel-body tweet-link-div">{{this.text}}</div></a>
+           <div class="panel-success panel-footer">
+             <p> Time and date: {{{formatDate this.created_at "DD-MM-YYYY"}}} </p>
+           </div>
+         </div>
+       </div>
+    {{/each}}
+  {{else}}
+  {{#if DBtweets}}
+    <!-- Display Tweets  -->
+    {{#each DBtweets}}
+      <div hidden class="col-md-12 tweet-container">
+         <div class="panel panel-success">
+           <!-- Search team name via DBPedia I think -->
+           <div class="panel-heading"><a href="https://www.twitter.com/{{this.username}}" target="_blank">{{this.username}} @{{this.username}}</a></div>
+           <a class="tweet-text" href="https://www.twitter.com/{{this.user.screen_name}}/status/{{this.id_str}}" target="_blank"><div class="panel-body tweet-link-div">{{this.tweet_text}}</div></a>
            <div class="panel-success panel-footer">
              <p> Time and date: {{{formatDate this.created_at}}} </p>
            </div>
@@ -66,4 +93,16 @@
       No tweet matches your query. Please try again !
     </div>
   {{/if}}
+  {{/if}}
 {{/if}}
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  var socket = io();
+
+  socket.on('stream', function(data){
+    //var date = moment().format(data.created_at, 'DD-MM-YYYY, h:mm')
+    //console.log(date)
+    $('<div class="panel panel-info"> <div class="panel panel-info new-tweet"> <div class="panel-heading"><a href="https://www.twitter.com/{{' + data.user.screen_name + '}}" target="_blank">' + data.user.name + ' @' + data.user.screen_name + '</a></div> <a class="tweet-text" href="https://www.twitter.com/' + data.user.screen_name + '/status/'+ data.id_str + '" target="_blank"><div class="panel-body tweet-link-div">' + data.text + '</div></a> <div class="panel-success panel-footer"> <p> Time and date:' + data.created_at + '</p> </div> </div> </div>').prependTo($('#tweets-list'));
+
+  });
+</script>

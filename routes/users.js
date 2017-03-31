@@ -1,3 +1,10 @@
+/*
+Credentials for accessing MySql database provided by university.
+by Thanh Trung, Omorhefere Imoloame and Mahesha Kulatunga.
+
+
+
+*/
 var express = require('express');
 var router = express.Router();
 

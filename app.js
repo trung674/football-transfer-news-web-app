@@ -1,4 +1,5 @@
 var express = require('express');
+var app = express();
 var path = require('path');
 var favicon = require('serve-favicon');
 var logger = require('morgan');
@@ -6,23 +7,23 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var mysql = require("mysql");
 var hbs = require('hbs');
-
+var moment = require('moment');
 var index = require('./routes/index');
 var users = require('./routes/users');
 
+var socketio = require('socket.io');
+var io = socketio();
+app.io = io;
 
-var app = express();
+
 
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'hbs');
-hbs.registerHelper('formatDate', function(object) {
-  var d = new Date(object);
-  var hour = d.getHours();
-  var minute = (d.getMinutes() < 10?'0':'') + d.getMinutes();
-  var d_str = hour + ':' + minute + ' ' + d.toDateString();
-  return d_str;
+hbs.registerHelper('formatDate', function(object, format) {
+  var date = moment(object).format(format);
+  return date;
 });
 
 hbs.registerHelper('formatArray', function(object) {
@@ -48,7 +49,7 @@ app.use(require('node-sass-middleware')({
 }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', index);
+app.use(require('./routes/index.js')(io));
 app.use('/users', users);
 
 // catch 404 and forward to error handler
@@ -68,5 +69,9 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 });
+
+
+
+
 
 module.exports = app;

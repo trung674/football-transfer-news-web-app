@@ -11,10 +11,10 @@ var hbs = require('hbs');
 var index = require('./routes/index');
 var users = require('./routes/users');
 
+var socketio = require('socket.io');
+var io = socketio();
+app.io = io;
 
-
-var server = require('http').Server(app);
-var io = require('socket.io')(server)
 
 
 // view engine setup

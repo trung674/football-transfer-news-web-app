@@ -37,28 +37,28 @@ client.stream('statuses/filter', {track: 'Messi'}, function(stream){
 
 
 
-var connection = mysql.createConnection({host: configDB.host, user: configDB.user, password: configDB.password, database: configDB.database});
+// var connection = mysql.createConnection({host: configDB.host, user: configDB.user, password: configDB.password, database: configDB.database});
 
-connection.connect(function(err) {
-    if (err) {
-        console.log('Error connecting to Db' + err);
-        return;
-    }
-    console.log('Connection established');
-});
+// connection.connect(function(err) {
+//     if (err) {
+//         console.log('Error connecting to Db' + err);
+//         return;
+//     }
+//     console.log('Connection established');
+// });
 
- connection.query('SELECT DISTINCT player_name,team FROM query WHERE player_name LIKE "%ronaldo%" ORDER BY created_at DESC LIMIT 3;', function(error, results, fields) {
-     if (error)
-         throw error;
-     //console.log(results)
-});
+// connection.query('SELECT DISTINCT player_name,team FROM query WHERE player_name LIKE "%ronaldo%" ORDER BY created_at DESC LIMIT 3;', function(error, results, fields) {
+//     if (error)
+//         throw error;
+//     //console.log(results)
+// });
 
 
 
-connection.query('SELECT * FROM tweet', function (error, results, fields) {
-  if (error) throw error;
-  //console.log(results)
-});
+// connection.query('SELECT * FROM tweet', function (error, results, fields) {
+//   if (error) throw error;
+//   //console.log(results)
+// });
 
 
 /* GET home page. */
@@ -132,12 +132,12 @@ router.post('/', function(req, res, next) {
                 // Frequency Analysis
                 var dateList = findUniqueDates(tweetCollection);
                 classifiedTweets = classifyTweets(dateList, tweetCollection, classifiedTweets);
-                insertQuery(tweetCollection, query, player, team, author);
+                // insertQuery(tweetCollection, query, player, team, author);
               }
-              for (t = 0; t < tweetCollection.length; t++) {
-                insertTweets(tweetCollection,t);
+              // for (t = 0; t < tweetCollection.length; t++) {
+              //   insertTweets(tweetCollection,t);
 
-              }
+              // }
               getRecommendations(tweetCollection, player, team, query, req, res, classifiedTweets);
 
 

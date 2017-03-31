@@ -1,5 +1,5 @@
 /*
-Credentials for accessing MySql database provided by university.
+users
 by Thanh Trung, Omorhefere Imoloame and Mahesha Kulatunga.
 
 

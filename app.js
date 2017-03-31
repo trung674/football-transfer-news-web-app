@@ -1,3 +1,9 @@
+/*
+this is the file that serves up all the satic assets. 
+by Thanh Trung, Omorhefere Imoloame and Mahesha Kulatunga.
+
+*/
+
 var express = require('express');
 var app = express();
 var path = require('path');

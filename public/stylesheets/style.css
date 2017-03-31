@@ -45,6 +45,10 @@ body {
   background-color: #2E8B57 !important;
   margin-top: 5% !important; }
 
+.new-tweet {
+  margin-bottom: 0px !important;
+  background: red; }
+
 .panel-footer {
   height: 40px; }
 

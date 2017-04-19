@@ -1,5 +1,5 @@
 /*
-this is the file that serves up all the satic assets. 
+this is the file that serves up all the satic assets.
 by Thanh Trung, Omorhefere Imoloame and Mahesha Kulatunga.
 
 */
@@ -28,7 +28,8 @@ app.io = io;
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'hbs');
 hbs.registerHelper('formatDate', function(object, format) {
-  var date = moment(object).format(format);
+  var createdAt = new Date(object);
+  var date = moment(createdAt).format(format);
   return date;
 });
 

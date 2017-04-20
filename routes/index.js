@@ -92,8 +92,13 @@ module.exports = function(io) {
 
                 T.get('search/tweets', { // query twitter rest api
                     q: query,
-                    count: 100
+                    count: 100,
+                    exclude: 'retweets',
+                    lang: 'en'
                 }, function(err, data, response) {
+                  console.log(response);
+                  console.log(data.statuses.length);
+
                   if (data.statuses.length === 0) {
                     res.render('index', {
                       query: query,
@@ -106,7 +111,9 @@ module.exports = function(io) {
                     T.get('search/tweets', {
                         max_id: data.statuses.pop().id_str,
                         q: query,
-                        count: 100
+                        count: 100,
+                        exclude: 'retweets',
+                        lang: 'en'
                     }, function(err1, data1, response1) {
                       if (data1.statuses.length === 1) {
                         getRecAndRender(tweetCollection, player, team, author, query, req, res);
@@ -117,7 +124,9 @@ module.exports = function(io) {
                         T.get('search/tweets', {
                             max_id: data1.statuses.pop().id_str,
                             q: query,
-                            count: 100
+                            count: 100,
+                            exclude: 'retweets',
+                            lang: 'en'
                         }, function(err2, data2, response2) {
                           if (data2.statuses.length === 1) {
                             getRecAndRender(tweetCollection, player, team, author, query, req, res);
@@ -129,7 +138,9 @@ module.exports = function(io) {
                             T.get('search/tweets', {
                                 max_id: data2.statuses.pop().id_str,
                                 q: query,
-                                count: 100
+                                count: 100,
+                                exclude: 'retweets',
+                                lang: 'en'
                             }, function(err3, data3, response3) {
                               if (data2.statuses.length === 1) {
                                 getRecAndRender(tweetCollection, player, team, author, query, req, res);

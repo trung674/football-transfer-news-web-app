@@ -1,5 +1,5 @@
 /*
-this is the file that serves up all the satic assets. 
+this is the file that serves up all the satic assets.
 by Thanh Trung, Omorhefere Imoloame and Mahesha Kulatunga.
 
 */
@@ -16,7 +16,7 @@ var hbs = require('hbs');
 var moment = require('moment');
 var index = require('./routes/index');
 var users = require('./routes/users');
-
+var api = require('./api/tweet');
 var socketio = require('socket.io');
 var io = socketio();
 app.io = io;
@@ -28,7 +28,8 @@ app.io = io;
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'hbs');
 hbs.registerHelper('formatDate', function(object, format) {
-  var date = moment(object).format(format);
+  var createdAt = new Date(object);
+  var date = moment(createdAt).format(format);
   return date;
 });
 
@@ -55,6 +56,7 @@ app.use(require('node-sass-middleware')({
 }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.use(api);
 app.use(require('./routes/index.js')(io));
 app.use('/users', users);
 

@@ -10,30 +10,21 @@ by Thanh Trung, Omorhefere Imoloame and Mahesha Kulatunga.
 var express = require('express');
 var router = express.Router();
 require('dotenv').config();
-var configDB = require('../config/database');
-
-var Twit = require('twit')
-var mysql = require('mysql')
-var app = require('../app');
+var mysql = require('mysql');
 var moment = require('moment');
-var T = new Twit({
-    consumer_key: process.env.TWIT_CONSUMER_KEY,
-    consumer_secret: process.env.TWIT_CONSUMER_SECRET,
-    access_token: process.env.TWIT_ACCESS,
-    access_token_secret: process.env.TWIT_ACCES_SECRET,
-    timeout_ms: 60 *1000, // optional HTTP request timeout to apply to all requests.
-})
+var connection = require('../config/database');
+var T = require('../config/twitter.js');
 
-var connection = mysql.createConnection({host: configDB.host, user: configDB.user, password: configDB.password, database: configDB.database});//Configure the database
-
-connection.connect(function(err) { //Connect the database.
-    if (err) {
-        console.log('Error connecting to Db' + err);
-        return;
-    }
-    console.log('Connection established');
-
-});
+// var connection = mysql.createConnection({host: configDB.host, user: configDB.user, password: configDB.password, database: configDB.database});//Configure the database
+//
+// connection.connect(function(err) { //Connect the database.
+//     if (err) {
+//         console.log('Error connecting to Db' + err);
+//         return;
+//     }
+//     console.log('Connection established');
+//
+// });
 /*
 connection.query('SELECT * FROM tweet WHERE tweet_text LIKE "%Ronaldo%" ORDER BY created_at DESC LIMIT 1', function(error, results, fields) {
     if (error)
@@ -66,6 +57,7 @@ module.exports = function(io) {
         query = basicKW;
         var streamQuery = '' // this is used to recieve new tweets
         var team = '';
+        var author = '';
 
         if (req.body.player) {
             player = req.body.player;
@@ -80,7 +72,7 @@ module.exports = function(io) {
         } // + " OR " + completeQuery(team,1)
 
         if (req.body.author) {
-            var author = req.body.author.replace(/@/g, "")
+            author = req.body.author.replace(/@/g, "")
             query = query + ' from:' + author; // add author to quey
         }
 
@@ -100,24 +92,42 @@ module.exports = function(io) {
 
                 T.get('search/tweets', { // query twitter rest api
                     q: query,
-                    count: 100
+                    count: 100,
+                    exclude: 'retweets',
+                    lang: 'en'
                 }, function(err, data, response) {
-
+                  if (data.statuses.length === 0) {
+                    res.render('index', {
+                      query: query,
+                      player: player,
+                      team: team,
+                      author: author
+                    });
+                  } else {
                     tweetCollection = tweetCollection.concat(data.statuses);
-
                     T.get('search/tweets', {
                         max_id: data.statuses.pop().id_str,
                         q: query,
-                        count: 100
+                        count: 100,
+                        exclude: 'retweets',
+                        lang: 'en'
                     }, function(err1, data1, response1) {
+                      if (data1.statuses.length === 1) {
+                        getRecAndRender(tweetCollection, player, team, author, query, req, res);
+                      } else {
                         // remove duplicate tweet
                         data1.statuses.shift();
                         tweetCollection = tweetCollection.concat(data1.statuses);
                         T.get('search/tweets', {
                             max_id: data1.statuses.pop().id_str,
                             q: query,
-                            count: 100
+                            count: 100,
+                            exclude: 'retweets',
+                            lang: 'en'
                         }, function(err2, data2, response2) {
+                          if (data2.statuses.length === 1) {
+                            getRecAndRender(tweetCollection, player, team, author, query, req, res);
+                          } else {
                             // remove duplicate tweet
                             data2.statuses.shift();
                             tweetCollection.concat(data2.statuses);
@@ -125,29 +135,27 @@ module.exports = function(io) {
                             T.get('search/tweets', {
                                 max_id: data2.statuses.pop().id_str,
                                 q: query,
-                                count: 100
+                                count: 100,
+                                exclude: 'retweets',
+                                lang: 'en'
                             }, function(err3, data3, response3) {
+                              if (data2.statuses.length === 1) {
+                                getRecAndRender(tweetCollection, player, team, author, query, req, res);
+                              } else {
                                 // remove duplicate tweet
                                 data3.statuses.shift();
                                 tweetCollection = tweetCollection.concat(data3.statuses);
-                                var classifiedTweets = [];
-                                if (data.statuses.length > 0) {
-                                    // Frequency Analysis
-                                    var dateList = findUniqueDates(tweetCollection);
-                                    classifiedTweets = classifyTweets(dateList, tweetCollection, classifiedTweets);
-                                    insertQuery(tweetCollection, query, player, team, author);
-                                }
-                                for (t = 0; t < tweetCollection.length; t++) {
-                                    insertTweets(tweetCollection, t);
-
-                                }
-                                getRecAndRender(tweetCollection, player, team, query, req, res, classifiedTweets);
+                                getRecAndRender(tweetCollection, player, team, author, query, req, res);
+                              }
                             });
+                          }
                         });
+                      }
                     });
+                  }
                 });
             } else {
-                //
+                //get results from the database
                 getDBResults(player, team, query, req, res);
             }
         } else {
@@ -263,47 +271,57 @@ var past = connection.query('SELECT * FROM tweet WHERE tweet_text LIKE "%' + req
 }
 }
 
-function getRecAndRender(tweets, player, team, query, req, res, classifiedTweets) {
-if (team !== '') {
-var id = []
-// find terms that are unique to to current query terms and render theem also
-var check = connection.query('SELECT DISTINCT player_name,team FROM query WHERE player_name LIKE "%' + player + '%" AND team LIKE "%' + team + '%" ORDER BY created_at DESC LIMIT 3;', [ // if team and player name are given
-    player, team
-], function(error, results, fields) {
-    if (error) {
-        throw error;
-    } else {
-        console.log(results)
-        res.render('index', {
-            query: query,
-            player: player,
-            team: team,
-            tweets: tweets,
-            classifiedTweets: classifiedTweets,
-            recommendations: results,
-            moment: moment
-        });
-    }
-});
-} else {
-var id = []
-var past = connection.query('SELECT DISTINCT player_name,team FROM query WHERE player_name LIKE "%' + req.body.player + '%" ORDER BY created_at DESC LIMIT 3;', req.body.player, function(error, results, fields) { // if only player name is given
-    if (error) {
-        throw error;
-    } else {
+function getRecAndRender(tweets, player, team, author, query, req, res) {
+  // Frequency Analysis
+  var classifiedTweets = [];
+  var dateList = findUniqueDates(tweets);
+  classifiedTweets = classifyTweets(dateList, tweets, classifiedTweets);
+  //insert query and tweets to database
+  insertQuery(tweets, query, player, team, author);
+  for (t = 0; t < tweets.length; t++) {
+    insertTweets(tweets, t);
+  }
+  //get recommendations and render
+  if (team !== '') {
+    var id = []
+    // find terms that are unique to to current query terms and render theem also
+    var check = connection.query('SELECT DISTINCT player_name,team FROM query WHERE player_name LIKE "%' + player + '%" AND team LIKE "%' + team + '%" ORDER BY created_at DESC LIMIT 3;', [ // if team and player name are given
+        player, team
+    ], function(error, results, fields) {
+        if (error) {
+            throw error;
+        } else {
+            console.log(results)
+            res.render('index', {
+                query: query,
+                player: player,
+                team: team,
+                tweets: tweets,
+                classifiedTweets: classifiedTweets,
+                recommendations: results,
+                moment: moment
+            });
+        }
+    });
+  } else {
+    var id = []
+    var past = connection.query('SELECT DISTINCT player_name,team FROM query WHERE player_name LIKE "%' + req.body.player + '%" ORDER BY created_at DESC LIMIT 3;', req.body.player, function(error, results, fields) { // if only player name is given
+        if (error) {
+            throw error;
+        } else {
 
-        res.render('index', {
-            query: query,
-            player: player,
-            team: team,
-            tweets: tweets,
-            classifiedTweets: classifiedTweets,
-            recommendations: results,
-            moment: moment
-        });
-    }
-});
-}
+            res.render('index', {
+                query: query,
+                player: player,
+                team: team,
+                tweets: tweets,
+                classifiedTweets: classifiedTweets,
+                recommendations: results,
+                moment: moment
+            });
+        }
+    });
+  }
 }
 
 function findUniqueDates(tweets) {

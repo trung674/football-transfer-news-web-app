@@ -10,21 +10,21 @@ by Thanh Trung, Omorhefere Imoloame and Mahesha Kulatunga.
 var express = require('express');
 var router = express.Router();
 require('dotenv').config();
-var configDB = require('../config/database');
-var mysql = require('mysql')
+var mysql = require('mysql');
 var moment = require('moment');
+var connection = require('../config/database');
 var T = require('../config/twitter.js');
 
-var connection = mysql.createConnection({host: configDB.host, user: configDB.user, password: configDB.password, database: configDB.database});//Configure the database
-
-connection.connect(function(err) { //Connect the database.
-    if (err) {
-        console.log('Error connecting to Db' + err);
-        return;
-    }
-    console.log('Connection established');
-
-});
+// var connection = mysql.createConnection({host: configDB.host, user: configDB.user, password: configDB.password, database: configDB.database});//Configure the database
+//
+// connection.connect(function(err) { //Connect the database.
+//     if (err) {
+//         console.log('Error connecting to Db' + err);
+//         return;
+//     }
+//     console.log('Connection established');
+//
+// });
 /*
 connection.query('SELECT * FROM tweet WHERE tweet_text LIKE "%Ronaldo%" ORDER BY created_at DESC LIMIT 1', function(error, results, fields) {
     if (error)
@@ -96,9 +96,6 @@ module.exports = function(io) {
                     exclude: 'retweets',
                     lang: 'en'
                 }, function(err, data, response) {
-                  console.log(response);
-                  console.log(data.statuses.length);
-
                   if (data.statuses.length === 0) {
                     res.render('index', {
                       query: query,

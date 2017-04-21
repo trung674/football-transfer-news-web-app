@@ -16,7 +16,7 @@ var hbs = require('hbs');
 var moment = require('moment');
 var index = require('./routes/index');
 var users = require('./routes/users');
-
+var api = require('./api/tweet');
 var socketio = require('socket.io');
 var io = socketio();
 app.io = io;
@@ -56,6 +56,7 @@ app.use(require('node-sass-middleware')({
 }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.use(api);
 app.use(require('./routes/index.js')(io));
 app.use('/users', users);
 

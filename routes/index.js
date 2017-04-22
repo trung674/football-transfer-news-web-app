@@ -14,6 +14,8 @@ var mysql = require('mysql');
 var moment = require('moment');
 var connection = require('../config/database');
 var T = require('../config/twitter.js');
+var dps = require('dbpedia-sparql-client').default;
+
 
 // var connection = mysql.createConnection({host: configDB.host, user: configDB.user, password: configDB.password, database: configDB.database});//Configure the database
 //
@@ -41,6 +43,54 @@ connection.query('SELECT * FROM tweet', function(error, results, fields) {
     }
 );
 */
+
+//getDBPInfo("Wayne_Rooney");
+
+function getDBPInfo(player){
+  var queryFront = 'PREFIX dbpedia: <http://dbpedia.org/resource/> PREFIX dbpedia-owl: <http://dbpedia.org/ontology/> PREFIX dbpedia-prop: <http://dbpedia.org/property/> SELECT ?name, ?birthDate, ?team, ?position WHERE { dbpedia:'
+  var Fullquery =  queryFront + player + ' dbpedia-owl:abstract ?abstract ; dbpedia-prop:name ?name ; dbpedia-owl:birthDate ?birthDate ; dbpedia-owl:team ?team ; dbpedia-prop:position ?position .filter(langMatches(lang(?abstract),"en"))}';
+
+  dps.client()
+    .query(Fullquery)
+    .timeout(15000) // optional, defaults to 10000
+    .asJson() // or asXml()
+    .then(function(r) {
+      var db_player_name = r.results.bindings[0].name.value
+      var db_player_dob = r.results.bindings[0].birthDate.value
+      var db_teams = []
+      var db_positions = []
+      for (entry = 0; entry < r.results.bindings.length; entry ++){
+        db_teams.push(r.results.bindings[entry].team.value)
+        db_positions.push(r.results.bindings[entry].position.value)
+      }
+      console.log(db_player_name)
+      console.log(db_player_dob)
+      console.log(db_teams[0])
+      console.log(db_positions)
+
+
+      /* handle success */ })
+    .catch(function(e) { /* handle error */ });
+}
+
+function getDBPPosition(){
+  var queryFront = 'PREFIX dbpedia-rdfs: <http://www.w3.org/2000/01/rdf-schema#> SELECT ?uri ?id ?label WHERE {?uri <http://dbpedia.org/ontology/wikiPageID> ?id ; dbpedia-rdfs:label ?label .FILTER (?uri = <'
+  var db_position_uri = 'http://dbpedia.org/resource/Forward_(association_football)'
+  var fullQuery = queryFront + db_position_uri + '>) .FILTER langMatches( lang(?label),"en")}'
+
+  dps.client()
+    .query(fullQuery)
+    .timeout(15000) // optional, defaults to 10000
+    .asJson() // or asXml()
+    .then(function(r) {
+      console.log(r.results.bindings[0].label.value)
+      return r.results.bindings[0].label.value
+      /* handle success */ })
+    .catch(function(e) { /* handle error */ });
+}
+getDBPPosition()
+
+
 
 module.exports = function(io) {
 

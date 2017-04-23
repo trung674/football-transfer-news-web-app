@@ -44,11 +44,9 @@ connection.query('SELECT * FROM tweet', function(error, results, fields) {
 );
 */
 
-//getDBPInfo("Wayne_Rooney");
-
 function getDBPInfo(player){
-  var queryFront = 'PREFIX dbpedia: <http://dbpedia.org/resource/> PREFIX dbpedia-owl: <http://dbpedia.org/ontology/> PREFIX dbpedia-prop: <http://dbpedia.org/property/> SELECT ?name, ?birthDate, ?team, ?position WHERE { dbpedia:'
-  var Fullquery =  queryFront + player + ' dbpedia-owl:abstract ?abstract ; dbpedia-prop:name ?name ; dbpedia-owl:birthDate ?birthDate ; dbpedia-owl:team ?team ; dbpedia-prop:position ?position .filter(langMatches(lang(?abstract),"en"))}';
+  var queryFront = 'PREFIX dbpedia: <http://dbpedia.org/resource/> PREFIX dbpedia-owl: <http://dbpedia.org/ontology/> PREFIX dbpedia-prop: <http://dbpedia.org/property/> SELECT ?name, ?birthDate, ?currentclub, ?position WHERE { dbpedia:'
+  var Fullquery =  queryFront + player + ' dbpedia-owl:abstract ?abstract ; dbpedia-prop:name ?name ; dbpedia-owl:birthDate ?birthDate ; dbpedia-prop:currentclub ?currentclub ; dbpedia-prop:position ?position .filter(langMatches(lang(?abstract),"en"))}';
 
   dps.client()
     .query(Fullquery)
@@ -57,38 +55,27 @@ function getDBPInfo(player){
     .then(function(r) {
       var db_player_name = r.results.bindings[0].name.value
       var db_player_dob = r.results.bindings[0].birthDate.value
-      var db_teams = []
-      var db_positions = []
-      for (entry = 0; entry < r.results.bindings.length; entry ++){
-        db_teams.push(r.results.bindings[entry].team.value)
-        db_positions.push(r.results.bindings[entry].position.value)
-      }
+      var db_position_uri = r.results.bindings[0].position.value
+      var db_position = formatURI(db_position_uri)
+
+      var db_team_uri = r.results.bindings[0].currentclub.value
+      var db_team = formatURI(db_team_uri)
+
       console.log(db_player_name)
       console.log(db_player_dob)
-      console.log(db_teams[0])
-      console.log(db_positions)
-
-
+      console.log(db_position)
+      console.log(db_team)
       /* handle success */ })
     .catch(function(e) { /* handle error */ });
 }
 
-function getDBPPosition(){
-  var queryFront = 'PREFIX dbpedia-rdfs: <http://www.w3.org/2000/01/rdf-schema#> SELECT ?uri ?id ?label WHERE {?uri <http://dbpedia.org/ontology/wikiPageID> ?id ; dbpedia-rdfs:label ?label .FILTER (?uri = <'
-  var db_position_uri = 'http://dbpedia.org/resource/Forward_(association_football)'
-  var fullQuery = queryFront + db_position_uri + '>) .FILTER langMatches( lang(?label),"en")}'
-
-  dps.client()
-    .query(fullQuery)
-    .timeout(15000) // optional, defaults to 10000
-    .asJson() // or asXml()
-    .then(function(r) {
-      console.log(r.results.bindings[0].label.value)
-      return r.results.bindings[0].label.value
-      /* handle success */ })
-    .catch(function(e) { /* handle error */ });
+function formatURI(string){
+  cutIndex = string.lastIndexOf("/");
+  string = string.substring(cutIndex+1, string.length);
+  string = string.replace(/_/g,' ')
+  return string
 }
-getDBPPosition()
+//getDBPPosition()
 
 
 
@@ -133,10 +120,9 @@ module.exports = function(io) {
                 // Welcome to callback hell
 
                 io.on('connection', function(socket) {
-                    //console.log('Socket stream initiated')
-                    // console.log(streamQuery)
                     //stream new tweets
                     streamTweets(streamQuery, io)
+                    getDBPInfo("Cristiano_Ronaldo");
 
                 });
 
@@ -359,7 +345,7 @@ function getRecAndRender(tweets, player, team, author, query, req, res) {
         if (error) {
             throw error;
         } else {
-
+            getDBPInfo("Cristiano_Ronaldo");
             res.render('index', {
                 query: query,
                 player: player,

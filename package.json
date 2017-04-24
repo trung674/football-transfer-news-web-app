@@ -21,6 +21,7 @@
     "node-sass-middleware": "0.9.8",
     "serve-favicon": "~2.3.2",
     "socket.io": "^1.7.3",
+    "sparqling-star": "^1.1.0",
     "twit": "^2.2.5",
     "twitter": "^1.7.0"
   }

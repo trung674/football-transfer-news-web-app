@@ -15,26 +15,20 @@ var moment = require('moment');
 var connection = require('../config/database');
 var T = require('../config/twitter.js');
 var dps = require('dbpedia-sparql-client').default;
+var sparqls = require( 'sparqling-star' );
 
 
-// var connection = mysql.createConnection({host: configDB.host, user: configDB.user, password: configDB.password, database: configDB.database});//Configure the database
-//
-// connection.connect(function(err) { //Connect the database.
-//     if (err) {
-//         console.log('Error connecting to Db' + err);
-//         return;
-//     }
-//     console.log('Connection established');
-//
-// });
-/*
-connection.query('SELECT * FROM tweet WHERE tweet_text LIKE "%Ronaldo%" ORDER BY created_at DESC LIMIT 1', function(error, results, fields) {
-    if (error)
-        throw error;
-        //console.log(results)
-    }
-);
-*/
+
+
+//connection.query('SELECT DISTINCT player_name FROM db_player_names WHERE player_name LIKE "%' + 'Rooney' + '%" OR player_twitter="' + '' + '" LIMIT 1;', function(error, results, fields) {
+//    if (error)
+//        throw error;
+//        //console.log(results)
+//    else
+//      console.log(results)
+//    }
+//);
+
 /*
 connection.query('SELECT * FROM tweet', function(error, results, fields) {
     if (error)
@@ -43,40 +37,6 @@ connection.query('SELECT * FROM tweet', function(error, results, fields) {
     }
 );
 */
-
-function getDBPInfo(player){
-  var queryFront = 'PREFIX dbpedia: <http://dbpedia.org/resource/> PREFIX dbpedia-owl: <http://dbpedia.org/ontology/> PREFIX dbpedia-prop: <http://dbpedia.org/property/> SELECT ?name, ?birthDate, ?currentclub, ?position WHERE { dbpedia:'
-  var Fullquery =  queryFront + player + ' dbpedia-owl:abstract ?abstract ; dbpedia-prop:name ?name ; dbpedia-owl:birthDate ?birthDate ; dbpedia-prop:currentclub ?currentclub ; dbpedia-prop:position ?position .filter(langMatches(lang(?abstract),"en"))}';
-
-  dps.client()
-    .query(Fullquery)
-    .timeout(15000) // optional, defaults to 10000
-    .asJson() // or asXml()
-    .then(function(r) {
-      var db_player_name = r.results.bindings[0].name.value
-      var db_player_dob = r.results.bindings[0].birthDate.value
-      var db_position_uri = r.results.bindings[0].position.value
-      var db_position = formatURI(db_position_uri)
-
-      var db_team_uri = r.results.bindings[0].currentclub.value
-      var db_team = formatURI(db_team_uri)
-
-      console.log(db_player_name)
-      console.log(db_player_dob)
-      console.log(db_position)
-      console.log(db_team)
-      /* handle success */ })
-    .catch(function(e) { /* handle error */ });
-}
-
-function formatURI(string){
-  cutIndex = string.lastIndexOf("/");
-  string = string.substring(cutIndex+1, string.length);
-  string = string.replace(/_/g,' ')
-  return string
-}
-//getDBPPosition()
-
 
 
 module.exports = function(io) {
@@ -91,8 +51,9 @@ module.exports = function(io) {
     router.post('/', function(req, res, next) {
         // transer keywords so only tweets relating to transfers are returned
         var basicKW = 'transfer OR buy OR bid OR moving OR move AND ';
-        query = basicKW;
+        var query = basicKW
         var streamQuery = '' // this is used to recieve new tweets
+        var player = '';
         var team = '';
         var author = '';
 
@@ -110,22 +71,18 @@ module.exports = function(io) {
 
         if (req.body.author) {
             author = req.body.author.replace(/@/g, "")
-            query = query + ' from:' + author; // add author to quey
+            query = query + ' from:' + author; // add author to query
         }
 
         if (query !== basicKW) {
-
             if (req.body.api) {
                 var tweetCollection = [];
                 // Welcome to callback hell
-
+                //Initiate twittter tweet stream API and send new tweets to front end when recieved
                 io.on('connection', function(socket) {
                     //stream new tweets
                     streamTweets(streamQuery, io)
-                    getDBPInfo("Cristiano_Ronaldo");
-
                 });
-
                 T.get('search/tweets', { // query twitter rest api
                     q: query,
                     count: 100,
@@ -273,8 +230,8 @@ function getDBResults(player, team, query, req, res) {
 if (team !== '') {
 var id = []
 // if team and player given
-var check = connection.query('SELECT * FROM tweet WHERE tweet_text LIKE "%' + player + '%" AND tweet_text LIKE "%' + team + '%" ORDER BY created_at DESC', [
-    player, team
+connection.query('SELECT * FROM tweet WHERE tweet_text LIKE "%' + req.body.player + '%" AND tweet_text LIKE "%' + req.body.team + '%" ORDER BY created_at DESC', [
+    req.body.player, req.body.team
 ], function(error, results, fields) {
     if (error) {
         throw error;
@@ -291,7 +248,7 @@ var check = connection.query('SELECT * FROM tweet WHERE tweet_text LIKE "%' + pl
 } else {
 var id = []
 // if only player given
-var past = connection.query('SELECT * FROM tweet WHERE tweet_text LIKE "%' + req.body.player + '%" ORDER BY created_at DESC', req.body.player, function(error, results, fields) {
+connection.query('SELECT * FROM tweet WHERE tweet_text LIKE "%' + req.body.player + '%" ORDER BY created_at DESC', req.body.player, function(error, results, fields) {
     if (error) {
         throw error;
     } else {
@@ -321,13 +278,10 @@ function getRecAndRender(tweets, player, team, author, query, req, res) {
   if (team !== '') {
     var id = []
     // find terms that are unique to to current query terms and render theem also
-    var check = connection.query('SELECT DISTINCT player_name,team FROM query WHERE player_name LIKE "%' + player + '%" AND team LIKE "%' + team + '%" ORDER BY created_at DESC LIMIT 3;', [ // if team and player name are given
-        player, team
-    ], function(error, results, fields) {
+    connection.query('SELECT DISTINCT player_name,team FROM query WHERE player_name LIKE "%' + req.body.player + '%" AND team LIKE "%' + req.body.team + '%" ORDER BY created_at DESC LIMIT 3;', [req.body.player,req.body.team], function(error, results, fields) {
         if (error) {
             throw error;
         } else {
-            console.log(results)
             res.render('index', {
                 query: query,
                 player: player,
@@ -341,23 +295,113 @@ function getRecAndRender(tweets, player, team, author, query, req, res) {
     });
   } else {
     var id = []
-    var past = connection.query('SELECT DISTINCT player_name,team FROM query WHERE player_name LIKE "%' + req.body.player + '%" ORDER BY created_at DESC LIMIT 3;', req.body.player, function(error, results, fields) { // if only player name is given
+    connection.query('SELECT DISTINCT player_name,team FROM query WHERE player_name LIKE "%' + req.body.player + '%" ORDER BY created_at DESC LIMIT 3;', req.body.player, function(error, results, fields) { // if only player name is given
         if (error) {
             throw error;
         } else {
-            getDBPInfo("Cristiano_Ronaldo");
-            res.render('index', {
-                query: query,
-                player: player,
-                team: team,
-                tweets: tweets,
-                classifiedTweets: classifiedTweets,
-                recommendations: results,
-                moment: moment
-            });
+          var recommendations = results
+          connection.query('SELECT DISTINCT player_ID FROM db_player_names WHERE player_name LIKE "%' + req.body.player + '%" OR player_twitter="' + req.body.author + '" LIMIT 1;', [req.body.player,req.body.author], function(error, results, fields) { // if only player name is given
+              if (error) {
+                  throw error;
+              } else {
+                  if (results.length > 0){
+                    getDBPInfo(results[0].player_ID, query, player, team, tweets, classifiedTweets, recommendations, moment, req, res)
+
+                  }
+                  else{
+                    res.render('index', {
+                        query: query,
+                        player: player,
+                        team: team,
+                        tweets: tweets,
+                        classifiedTweets: classifiedTweets,
+                        recommendations: recommendations,
+                        moment: moment
+                    });
+                  }
+
+              }
+          });
         }
     });
   }
+}
+function getDBPInfo(player_id, query, player, team, tweets, classifiedTweets, recommendations, moment, req, res){
+  var myquery = new sparqls.Query({
+      'limit': 1
+  });
+
+  var player = {
+  	'dbo:wikiPageID': player_id,
+    'dbp:name': '?name',
+    'dbo:birthDate': '?birthDate',
+    'dbp:currentclub': '?currentclub',
+    'dbp:position': '?position'
+  };
+
+  myquery.registerVariable( 'player', player )
+         .registerPrefix( 'dbres', '<http://dbpedia.org/resource/>' )
+         .registerPrefix( 'dbowl', '<http://dbpedia.org/ontology/>' )
+         .registerPrefix( 'dbprop', '<http://dbpedia.org/property/>' )
+         //.selection( 'birthDate' )
+  ;
+
+  var sparqler = new sparqls.Client();
+  //console.log(myquery.sparqlQuery)
+  var test = ''
+  sparqler.send( myquery, function( error, data ) {
+    var db_player_name = data.results.bindings[0].name.value
+    var db_player_dob = data.results.bindings[0].birthDate.value
+    var db_position_uri = data.results.bindings[0].position.value
+    var db_position = formatURI(db_position_uri)
+    var db_team_uri = data.results.bindings[0].currentclub.value
+    var db_team = formatURI(db_team_uri)
+    console.log(db_player_name)
+    console.log(db_player_dob)
+    console.log(db_position)
+    console.log(db_team)
+    res.render('index', {
+        query: query,
+        player: player,
+        team: team,
+        tweets: tweets,
+        classifiedTweets: classifiedTweets,
+        recommendations: recommendations,
+        moment: moment
+    });
+  });
+
+
+
+  /*
+  var queryFront = 'PREFIX dbpedia: <http://dbpedia.org/resource/> PREFIX dbpedia-owl: <http://dbpedia.org/ontology/> PREFIX dbpedia-prop: <http://dbpedia.org/property/> SELECT ?name, ?birthDate, ?currentclub, ?position WHERE { dbpedia:'
+  var Fullquery =  queryFront + player_uri + ' dbpedia-owl:abstract ?abstract ; dbpedia-prop:name ?name ; dbpedia-owl:birthDate ?birthDate ; dbpedia-prop:currentclub ?currentclub ; dbpedia-prop:position ?position .filter(langMatches(lang(?abstract),"en"))}';
+  dps.client()
+    .query(Fullquery)
+    .timeout(15000) // optional, defaults to 10000
+    .asJson() // or asXml()
+    .then(function(r) {
+      var db_player_name = r.results.bindings[0].name.value
+      var db_player_dob = r.results.bindings[0].birthDate.value
+      var db_position_uri = r.results.bindings[0].position.value
+      var db_position = formatURI(db_position_uri)
+      var db_team_uri = r.results.bindings[0].currentclub.value
+      var db_team = formatURI(db_team_uri)
+      //console.log(db_player_name)
+      //console.log(db_player_dob)
+      //console.log(db_position)
+      //console.log(db_team)
+      /* handle success *
+    })
+    .catch(function(e) { /* handle error * });    */
+
+}
+
+function formatURI(string){
+  cutIndex = string.lastIndexOf("/");
+  string = string.substring(cutIndex+1, string.length);
+  string = string.replace(/_/g,' ')
+  return string
 }
 
 function findUniqueDates(tweets) {

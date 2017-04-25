@@ -51,15 +51,16 @@
       {{/if}}
     </div>
   <!-- Search Result -->
-  <div class= "col-md-12 results-section">
+
   {{#if query}}
-    <h3> Search results for "{{player}} {{team}} {{author}}" </h3>
-  </div>
+    <div class= "col-md-12 results-section">
+      <h3> Search results for "{{player}} {{team}} {{author}}" </h3>
+    </div>
   {{#if tweets}}
     <!-- Frequency Analysis  -->
     <div class="col-md-12">
       <div class="panel panel-default">
-        <div class="panel-heading">Frequency Analysis - Total tweets: {{tweets.length}}</div>
+        <div class="panel-heading">Frequency Analysis</div>
         <div class="panel-body">
           {{{formatArray classifiedTweets}}}
         </div>
@@ -78,6 +79,12 @@
          </div>
        </div>
     {{/each}}
+
+    {{#if tweetsDB}}
+      <div class="col-md-12 tweet-container">
+        <p class="bg bg-info">There are {{tweetsDB}} tweets about this query in the database !</p>
+      </div>
+    {{/if}}
   {{else}}
   {{#if DBtweets}}
     <!-- Display Tweets  -->
@@ -94,8 +101,11 @@
        </div>
     {{/each}}
   {{else}}
-    <div class="container col-md-12">
-      No tweet matches your query. Please try again !
+    <div class="col-md-12 tweet-container">
+      <p>No (new) tweets found on Twitter</p>.
+      {{#if tweetsDB}}
+        <p class="bg bg-info">There are {{tweetsDB}} tweets about this query in the database !</p>
+      {{/if}}
     </div>
   {{/if}}
   {{/if}}

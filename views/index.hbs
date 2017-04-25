@@ -59,7 +59,7 @@
     <!-- Frequency Analysis  -->
     <div class="col-md-12">
       <div class="panel panel-default">
-        <div class="panel-heading">Frequency Analysis</div>
+        <div class="panel-heading">Frequency Analysis - Total tweets: {{tweets.length}}</div>
         <div class="panel-body">
           {{{formatArray classifiedTweets}}}
         </div>
@@ -73,7 +73,7 @@
            <div class="panel-heading"><a href="https://www.twitter.com/{{this.user.screen_name}}" target="_blank">{{this.user.name}} @{{this.user.screen_name}}</a></div>
            <a class="tweet-text" href="https://www.twitter.com/{{this.user.screen_name}}/status/{{this.id_str}}" target="_blank"><div class="panel-body tweet-link-div">{{this.text}}</div></a>
            <div class="panel-success panel-footer">
-             <p> Time and date: {{{formatDate this.created_at "MMM Do YY"}}} </p>
+             <p> Time and date: {{{formatDate this.created_at "dddd, MMMM Do YYYY, h:mm:ss a"}}} </p>
            </div>
          </div>
        </div>

@@ -90,62 +90,144 @@ module.exports = function(io) {
 
                 });
 
-                T.get('search/tweets', { // query twitter rest api
-                    q: query,
-                    count: 100,
-                    exclude: 'retweets',
-                    lang: 'en'
-                }, function(err, data, response) {
-                  if (data.statuses.length === 0) {
-                    res.render('index', {
-                      query: query,
-                      player: player,
-                      team: team,
-                      author: author
-                    });
-                  } else {
-                    tweetCollection = tweetCollection.concat(data.statuses);
-                    T.get('search/tweets', {
-                        max_id: data.statuses.pop().id_str,
+                connection.query("SELECT * FROM query WHERE query_text = '" + query + "'", function(error, results, fields) {
+                  // if the query already existed in database, search with "since" property, else normal search
+                  if (results.length === 1) {
+                    var searched_at = moment(results[0].created_at).format("YYYY-MM-DD");
+                    T.get('search/tweets', { // query twitter rest api
                         q: query,
                         count: 100,
                         exclude: 'retweets',
-                        lang: 'en'
-                    }, function(err1, data1, response1) {
-                      if (data1.statuses.length === 1) {
-                        getRecAndRender(tweetCollection, player, team, author, query, req, res);
+                        lang: 'en',
+                        since: searched_at
+                    }, function(err, data, response) {
+                      console.log("First iteration : " + data.statuses.length);
+                      if (data.statuses.length === 0) {
+                        res.render('index', {
+                          query: query,
+                          player: player,
+                          team: team,
+                          author: author
+                        });
                       } else {
-                        // remove duplicate tweet
-                        data1.statuses.shift();
-                        tweetCollection = tweetCollection.concat(data1.statuses);
+                        tweetCollection = tweetCollection.concat(data.statuses);
                         T.get('search/tweets', {
-                            max_id: data1.statuses.pop().id_str,
+                            max_id: data.statuses.pop().id_str,
                             q: query,
                             count: 100,
                             exclude: 'retweets',
                             lang: 'en'
-                        }, function(err2, data2, response2) {
-                          if (data2.statuses.length === 1) {
+                        }, function(err1, data1, response1) {
+                          console.log("Second iteration : " + data1.statuses.length);
+                          if (data1.statuses.length === 0 || data1.statuses.length === 1) {
                             getRecAndRender(tweetCollection, player, team, author, query, req, res);
                           } else {
                             // remove duplicate tweet
-                            data2.statuses.shift();
-                            tweetCollection.concat(data2.statuses);
-                            // 4th call to compensate for removing dupicate tweets
+                            data1.statuses.shift();
+                            tweetCollection = tweetCollection.concat(data1.statuses);
                             T.get('search/tweets', {
-                                max_id: data2.statuses.pop().id_str,
+                                max_id: data1.statuses.pop().id_str,
+                                q: query,
+                                count: 100,
+                                exclude: 'retweets',
+                                lang: 'en',
+                                since: searched_at
+                            }, function(err2, data2, response2) {
+                              console.log("Third iteration : " + data2.statuses.length);
+                              if (data2.statuses.length === 0 || data2.statuses.length === 1) {
+                                getRecAndRender(tweetCollection, player, team, author, query, req, res);
+                              } else {
+                                // remove duplicate tweet
+                                data2.statuses.shift();
+                                tweetCollection.concat(data2.statuses);
+                                // 4th call to compensate for removing dupicate tweets
+                                T.get('search/tweets', {
+                                    max_id: data2.statuses.pop().id_str,
+                                    q: query,
+                                    count: 100,
+                                    exclude: 'retweets',
+                                    lang: 'en',
+                                    since: searched_at
+                                }, function(err3, data3, response3) {
+                                  console.log("Fourth iteration : " + data3.statuses.length);
+                                  if (data3.statuses.length === 0 || data3.statuses.length === 1) {
+                                    getRecAndRender(tweetCollection, player, team, author, query, req, res);
+                                  } else {
+                                    // remove duplicate tweet
+                                    data3.statuses.shift();
+                                    tweetCollection = tweetCollection.concat(data3.statuses);
+                                    getRecAndRender(tweetCollection, player, team, author, query, req, res);
+                                  }
+                                });
+                              }
+                            });
+                          }
+                        });
+                      }
+                    });
+                  } else {
+                    T.get('search/tweets', { // query twitter rest api
+                        q: query,
+                        count: 100,
+                        exclude: 'retweets',
+                        lang: 'en'
+                    }, function(err, data, response) {
+                      console.log("First iteration : " + data.statuses.length);
+                      if (data.statuses.length === 0) {
+                        res.render('index', {
+                          query: query,
+                          player: player,
+                          team: team,
+                          author: author
+                        });
+                      } else {
+                        tweetCollection = tweetCollection.concat(data.statuses);
+                        T.get('search/tweets', {
+                            max_id: data.statuses.pop().id_str,
+                            q: query,
+                            count: 100,
+                            exclude: 'retweets',
+                            lang: 'en'
+                        }, function(err1, data1, response1) {
+                          console.log("Second iteration : " + data1.statuses.length);
+                          if (data1.statuses.length === 1) {
+                            getRecAndRender(tweetCollection, player, team, author, query, req, res);
+                          } else {
+                            // remove duplicate tweet
+                            data1.statuses.shift();
+                            tweetCollection = tweetCollection.concat(data1.statuses);
+                            T.get('search/tweets', {
+                                max_id: data1.statuses.pop().id_str,
                                 q: query,
                                 count: 100,
                                 exclude: 'retweets',
                                 lang: 'en'
-                            }, function(err3, data3, response3) {
+                            }, function(err2, data2, response2) {
+                              console.log("Third iteration : " + data2.statuses.length);
                               if (data2.statuses.length === 1) {
                                 getRecAndRender(tweetCollection, player, team, author, query, req, res);
                               } else {
                                 // remove duplicate tweet
-                                data3.statuses.shift();
-                                tweetCollection = tweetCollection.concat(data3.statuses);
-                                getRecAndRender(tweetCollection, player, team, author, query, req, res);
+                                data2.statuses.shift();
+                                tweetCollection.concat(data2.statuses);
+                                // 4th call to compensate for removing dupicate tweets
+                                T.get('search/tweets', {
+                                    max_id: data2.statuses.pop().id_str,
+                                    q: query,
+                                    count: 100,
+                                    exclude: 'retweets',
+                                    lang: 'en'
+                                }, function(err3, data3, response3) {
+                                  console.log("Fourth iteration : " + data3.statuses.length);
+                                  if (data2.statuses.length === 1) {
+                                    getRecAndRender(tweetCollection, player, team, author, query, req, res);
+                                  } else {
+                                    // remove duplicate tweet
+                                    data3.statuses.shift();
+                                    tweetCollection = tweetCollection.concat(data3.statuses);
+                                    getRecAndRender(tweetCollection, player, team, author, query, req, res);
+                                  }
+                                });
                               }
                             });
                           }
@@ -177,60 +259,98 @@ function streamTweets(query, io) {
 }
 
 
-function insertTweets(data, t) {
-    // insert query into the database.
-connection.query('SELECT query_id FROM query ORDER BY created_at DESC LIMIT 1;', function(error, results, fields) {
-if (error) {
-    throw error;
-}
-// get information from tweet
-var tweet_id = data[t].id_str // tweet id
-var tweet_text = data[t].text // tweet text
-var username = data[t].user.screen_name // screen name of user who tweeted it
-var created_at = new Date(data[t].created_at) // when user tweeted it
-var created_at_str = created_at.toISOString().substring(0, 19).replace('T', ' ')
-var query_id = results[0].query_id
+function insertTweets(tweets, query) {
+  // insert query into the database.
+  connection.query("SELECT * FROM query WHERE query_text = '" + query + "'", function(error, results, fields){
+    var query_id = results[0].query_id;
+    var tweetsArray = [];
+    for (var tweet of tweets) {
+      var tweet_id = tweet.id_str // tweet id
+      var tweet_text = tweet.text // tweet text
+      var username = tweet.user.screen_name // screen name of user who tweeted it
+      var created_at = new Date(tweet.created_at) // when user tweeted it
+      var created_at_str = created_at.toISOString().substring(0, 19).replace('T', ' ') //why we need this ?
+      var tweetArray = [tweet_id, tweet_text, username, created_at, query_id];
+      tweetsArray.push(tweetArray);
+    }
+    var sql = "INSERT INTO tweet (tweet_id, tweet_text, username, created_at, query_id) VALUES ?";
+    connection.query(sql, [tweetsArray], function(error) {
+        if (error) {
+          throw error;
+        } else {
+          console.log("Successfully added " + tweetsArray.length + " more tweets.");
+        }
+    });
+  });
 
-var post = {
-    tweet_id: tweet_id,
-    tweet_text: tweet_text,
-    username: username,
-    created_at: created_at,
-    query_id: query_id
-};
-// check if tweet already in the database
-connection.query('SELECT * FROM tweet WHERE tweet_id =' + mysql.escape(tweet_id), function(error, results, fields) {
-    if (error) {
-        throw error;
-    }
-    if (results.length === 0) {
-        // if it isn't add to the database.
-        connection.query('INSERT INTO tweet SET ?', post, function(error, results, fields) {
-            if (error) {
-                throw error;
-            } else {
-                //console.log('tweet_inserted')
-            }
-        });
-    }
-});
-});
+  // connection.query('SELECT query_id FROM query ORDER BY created_at DESC LIMIT 1;', function(error, results, fields) {
+  //   if (error) {
+  //       throw error;
+  //   }
+  //   // get information from tweet
+  //   var tweet_id = tweet.id_str // tweet id
+  //   var tweet_text = tweet.text // tweet text
+  //   var username = tweet.user.screen_name // screen name of user who tweeted it
+  //   var created_at = new Date(tweet.created_at) // when user tweeted it
+  //   var created_at_str = created_at.toISOString().substring(0, 19).replace('T', ' ') //why we need this ?
+  //   var query_id = results[0].query_id
+  //
+  //   var post = {
+  //       tweet_id: tweet_id,
+  //       tweet_text: tweet_text,
+  //       username: username,
+  //       created_at: created_at,
+  //       query_id: query_id
+  //   };
+  //   // check if tweet already in the database
+  //   connection.query('SELECT * FROM tweet WHERE tweet_id =' + mysql.escape(tweet_id), function(error, results, fields) {
+  //       if (error) {
+  //           throw error;
+  //       }
+  //       if (results.length === 0) {
+  //           // if it isn't add to the database.
+  //           connection.query('INSERT INTO tweet SET ?', post, function(error, results, fields) {
+  //               if (error) {
+  //                   throw error;
+  //               } else {
+  //                   //console.log('tweet_inserted')
+  //               }
+  //           });
+  //       }
+  //   });
+  // });
 }
 // insert queries into the database
-function insertQuery(data, query, player, team, author) {
-var message = {
-query_text: query,
-player_name: player,
-team: team,
-author: author
-};
-connection.query('INSERT INTO query SET ?', message, function(error, results, fields) {
-if (error) {
-    throw error;
-} else {
-    //console.log('query_inserted')
-}
-});
+function insertQuery(tweets, query, player, team, author) {
+  connection.query("SELECT * FROM query WHERE query_text = '" + query + "'", function(error, results, fields) {
+    console.log("query length: " + results.length);
+    // check if query exists in database
+    if (results.length === 0) { //if yes, add query to database
+      var message = {
+        query_text: query,
+        player_name: player,
+        team: team,
+        author: author
+      };
+      connection.query("INSERT INTO query SET ?", message, function(error, results, fields) {
+        if (error) {
+            throw error;
+        } else {
+          console.log("Successfully add query: " + query);
+          insertTweets(tweets, query);
+        }
+      });
+    } else { // if no, change the value of created_at field
+      connection.query("UPDATE query SET created_at = NOW() WHERE query_text ='" + query + "'", function(error, results, fields) {
+        if (error) {
+            throw error;
+        } else {
+          console.log("Successfully update query " + query);
+          insertTweets(tweets, query);
+        }
+      });
+    }
+  });
 }
 // function for offline searching, check if query in database
 function getDBResults(player, team, query, req, res) {
@@ -278,9 +398,13 @@ function getRecAndRender(tweets, player, team, author, query, req, res) {
   classifiedTweets = classifyTweets(dateList, tweets, classifiedTweets);
   //insert query and tweets to database
   insertQuery(tweets, query, player, team, author);
-  for (t = 0; t < tweets.length; t++) {
-    insertTweets(tweets, t);
-  }
+  // for (t = 0; t < tweets.length; t++) {
+  //   insertTweets(tweets[t]);
+  // }
+
+  // connection.query("SELECT * FROM query WHERE query_text = '" + query + "'", function(error, results, fields){
+  //
+  // });
   //get recommendations and render
   if (team !== '') {
     var id = []

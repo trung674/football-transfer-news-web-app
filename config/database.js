@@ -22,7 +22,9 @@ connection.connect(function(err) { //Connect the database.
         return;
     }
     console.log('Connection established');
-
+    // connection.query("SELECT * FROM db_player_names;", function(error, results, fields) {
+    //   console.log(results[0].player_name);
+    // });
 });
 
 module.exports = connection;

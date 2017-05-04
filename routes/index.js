@@ -17,9 +17,6 @@ var T = require('../config/twitter.js');
 var dps = require('dbpedia-sparql-client').default;
 var sparqls = require( 'sparqling-star' );
 
-
-
-
 //connection.query('SELECT DISTINCT player_name FROM db_player_names WHERE player_name LIKE "%' + 'Rooney' + '%" OR player_twitter="' + '' + '" LIMIT 1;', function(error, results, fields) {
 //    if (error)
 //        throw error;
@@ -43,28 +40,28 @@ module.exports = function(io) {
 
     /* GET home page. */
     router.get('/', function(req, res, next) {
-
         res.render('index', {title: 'EMT Football Tweets'});
     });
     // post query
     var query = ''
     router.post('/', function(req, res, next) {
         // transer keywords so only tweets relating to transfers are returned
-        var basicKW = 'transfer OR buy OR bid OR moving OR move AND ';
-        var query = basicKW
-        var streamQuery = '' // this is used to recieve new tweets
+        var basicKW = 'transfer OR buy OR bid OR moving OR move';
+        var query = basicKW;
+        var streamQuery = ''; // this is used to recieve new tweets
+        var queryOption = req.body.queryOption;
         var player;
         var team;
         var author;
         if (req.body.player) {
             player = req.body.player;
-            query = query + player; //+ " OR " + splitQuery(player); update query for the rest api
+            query = query + ' AND ' + splitQuery(player);
             streamQuery = 'transfer ' + player + ',buy ' + player + ',bid ' + player + ',moving ' + player + ',move ' + player // create query for the stream API
         } // + " OR " + completeQuery(player,1)
 
         if (req.body.team) {
             team = req.body.team;
-            query = query + ' AND ' + team //+ " OR " + splitQuery(team);
+            query = query + ' ' + queryOption +  ' ' + splitQuery(team);
             streamQuery = streamQuery + ' transfer ' + team + ',buy ' + team + ',bid ' + team + ',moving ' + team + ',move ' + team
         } // + " OR " + completeQuery(team,1)
 
@@ -72,7 +69,7 @@ module.exports = function(io) {
             author = req.body.author.replace(/@/g, "")
             query = query + ' from:' + author; // add author to query
         }
-
+        console.log(query);
         if (query !== basicKW) {
             if (req.body.api) {
                 var tweetCollection = [];
@@ -412,7 +409,7 @@ function getRecAndRender(tweets, player, team, author, query, isExisted, req, re
   //get recommendations and render
 
 } else {
-  insertQueryAndTweets(tweets, query, player, team, author);
+  // insertQueryAndTweets(tweets, query, player, team, author);
   var dateList = findUniqueDates(tweets);
   classifiedTweets = classifyTweets(dateList, tweets, classifiedTweets);
   if (team !== '') {
@@ -563,28 +560,26 @@ function findUniqueDates(tweets) {
 }
 
 function classifyTweets(dates, tweets, array) {
-//find frequency of recent tweets.
-dates.forEach(function(date) {
-var tempArray = tweets.filter(function(tweet) {
-    return (new Date(tweet.created_at).getDate() == date);
-});
-array.push(tempArray);
-});
-return array;
+  //find frequency of recent tweets.
+  dates.forEach(function(date) {
+    var tempArray = tweets.filter(function(tweet) {
+      return (new Date(tweet.created_at).getDate() == date);
+    });
+    array.push(tempArray);
+  });
+  return array;
 }
-/*
-function splitQuery(queryString) {
-  var words = queryString.split(" ");
-  var fullQuery = ""
 
-  for (word = 0; word < words.length; word++){
-    if (word == words.length - 1){
-      fullQuery = fullQuery + words[word]
-    }
-    else{
-      fullQuery = fullQuery + words[word] + " OR "
+function splitQuery(queryString) {
+  var words = queryString.split(",");
+  var fullQuery = "";
+
+  for (var i = 0; i < words.length; i++) {
+    if (i === words.length - 1) {
+      fullQuery = fullQuery + words[i];
+    } else {
+      fullQuery = fullQuery + words[i] + " OR";
     }
   }
-  return (fullQuery)
+  return fullQuery;
  }
- */

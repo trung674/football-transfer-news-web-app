@@ -348,7 +348,6 @@ function getDBPInfo(player_id, query, player, team, tweets, classifiedTweets, re
 
   var sparqler = new sparqls.Client();
   //console.log(myquery.sparqlQuery)
-  var test = ''
   sparqler.send( myquery, function( error, data ) {
     var db_player_name = data.results.bindings[0].name.value
     var db_player_dob = data.results.bindings[0].birthDate.value
@@ -356,10 +355,22 @@ function getDBPInfo(player_id, query, player, team, tweets, classifiedTweets, re
     var db_position = formatURI(db_position_uri)
     var db_team_uri = data.results.bindings[0].currentclub.value
     var db_team = formatURI(db_team_uri)
-    console.log(db_player_name)
-    console.log(db_player_dob)
-    console.log(db_position)
-    console.log(db_team)
+    //console.log(db_player_name)
+    //console.log(db_player_dob)
+    //console.log(db_position)
+    //console.log(db_team)
+
+    //var DBpediaInfo = [db_player_name, db_player_dob, db_team, db_position]
+
+    var DBpediaInfo = {
+      player: [
+    {"name":db_player_name},
+    {"dob":db_player_dob},
+    {"team":db_team},
+    {"position":db_position}
+    ]}
+
+    console.log(DBpediaInfo.player[0].name)
     res.render('index', {
         query: query,
         player: player,
@@ -367,7 +378,8 @@ function getDBPInfo(player_id, query, player, team, tweets, classifiedTweets, re
         tweets: tweets,
         classifiedTweets: classifiedTweets,
         recommendations: recommendations,
-        moment: moment
+        moment: moment,
+        DBpediaInfo: DBpediaInfo
     });
   });
 

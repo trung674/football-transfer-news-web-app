@@ -16,6 +16,14 @@
             <div class="form-group">
               <input type="text" class="form-control" name="player" id="playerName" placeholder="Player (eg. Rooney, @waynerooney)">
             </div>
+            <div class="radio">
+              <label class="radio-inline">
+                <input type="radio" name="queryOption" value="AND" checked> AND
+              </label>
+              <label class="radio-inline">
+                <input type="radio" name="queryOption" value="OR"> OR
+              </label>
+            </div>
             <div class="form-group">
               <input type="text" class="form-control" name="team" id="teamName" placeholder="Team (eg. @manutd, #manutd)">
             </div>
@@ -54,10 +62,11 @@
       {{/if}}
     </div>
   <!-- Search Result -->
-  <div class= "col-md-12 results-section">
+
   {{#if query}}
-    <h3> Search results for "{{player}} {{team}} {{author}}" </h3>
-  </div>
+    <div class= "col-md-12 results-section">
+      <h3> Search results for "{{player}} {{team}} {{author}}" </h3>
+    </div>
   {{#if tweets}}
     <!-- Frequency Analysis  -->
     <div class="col-md-12">
@@ -76,11 +85,17 @@
            <div class="panel-heading"><a href="https://www.twitter.com/{{this.user.screen_name}}" target="_blank">{{this.user.name}} @{{this.user.screen_name}}</a></div>
            <a class="tweet-text" href="https://www.twitter.com/{{this.user.screen_name}}/status/{{this.id_str}}" target="_blank"><div class="panel-body tweet-link-div">{{this.text}}</div></a>
            <div class="panel-success panel-footer">
-             <p> Time and date: {{{formatDate this.created_at "MMM Do YY"}}} </p>
+             <p> Time and date: {{{formatDate this.created_at "dddd, MMMM Do YYYY, h:mm:ss a"}}} </p>
            </div>
          </div>
        </div>
     {{/each}}
+
+    {{#if tweetsDB}}
+      <div class="col-md-12 tweet-container">
+        <p class="bg bg-info">There are {{tweetsDB}} tweets about this query in the database !</p>
+      </div>
+    {{/if}}
   {{else}}
   {{#if DBtweets}}
     <!-- Display Tweets  -->
@@ -97,8 +112,11 @@
        </div>
     {{/each}}
   {{else}}
-    <div class="container col-md-12">
-      No tweet matches your query. Please try again !
+    <div class="col-md-12 tweet-container">
+      <p>No (new) tweets found on Twitter</p>.
+      {{#if tweetsDB}}
+        <p class="bg bg-info">There are {{tweetsDB}} tweets about this query in the database !</p>
+      {{/if}}
     </div>
   {{/if}}
   {{/if}}

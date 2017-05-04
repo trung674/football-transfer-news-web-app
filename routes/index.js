@@ -419,16 +419,29 @@ function getRecAndRender(tweets, player, team, author, query, isExisted, req, re
         if (error) {
             throw error;
         } else {
-            res.render('index', {
-                query: query,
-                player: player,
-                team: team,
-                tweets: tweets,
-                author: author,
-                classifiedTweets: classifiedTweets,
-                recommendations: results,
-                moment: moment
-            });
+          var recommendations = results
+          connection.query('SELECT DISTINCT player_ID FROM db_player_names WHERE player_name LIKE "%' + req.body.player + '%" OR player_twitter="' + req.body.author + '" LIMIT 1;', [req.body.player,req.body.author], function(error, results, fields) { // if only player name is given
+              if (error) {
+                  throw error;
+              } else {
+                  if (results.length > 0){
+                    getDBPInfo(results[0].player_ID, query, player, team, tweets, classifiedTweets, recommendations, moment, req, res)
+
+                  }
+                  else{
+                    res.render('index', {
+                        query: query,
+                        player: player,
+                        team: team,
+                        tweets: tweets,
+                        classifiedTweets: classifiedTweets,
+                        recommendations: recommendations,
+                        moment: moment
+                    });
+                  }
+
+              }
+          });
         }
     });
   } else {
@@ -509,7 +522,6 @@ function getDBPInfo(player_id, query, player, team, tweets, classifiedTweets, re
     {"position":db_position}
     ]}
 
-    console.log(DBpediaInfo.player[0].name)
     res.render('index', {
         query: query,
         player: player,

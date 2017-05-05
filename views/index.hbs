@@ -6,7 +6,7 @@
   </nav>
  {{! This is the box where tweets will be displye. }}
   <div class="row">
-    <div class="col-md-4 col-md-offset-4 search-section">
+    <div class="col-md-4 col-md-offset-2 search-section">
       <div class="panel">
         <div class="panel-body">
           {{#if message }}
@@ -42,28 +42,40 @@
           </form>
         </div>
       </div>
-      {{#if recommendations}} {{! These are the recommended searches that are based on your query. }}
-      <div class = "container col-sm-12">
-        <ol class="rec-list">
-          <li class="rec-heading"> People also searched for: </li>
-          {{#each recommendations}}
-            {{#if this.player_name}}
-              <li> {{this.player_name}},</li>
-            {{/if}}
-            {{#if this.team}}
-              <li> {{this.team}}, </li>
-            {{/if}}
-          {{/each}}
-        </ol>
-      </div>
-      {{/if}}
+    </div>
+    <div class="col-md-6 search-section">
       {{#if DBpediaInfo}}
+      <div class="col-sm-5">
+        <img src="{{DBpediaInfo.playerInfo.4.thumbnail}}" alt="Player_Image" width="200px" style="margin-top:10%;">
+      </div>
+      <div class="col-sm-7">
         <h1>{{DBpediaInfo.playerInfo.0.name}} </h1>
         <p> ({{DBpediaInfo.playerInfo.1.dob}}) <p>
         <h3>{{DBpediaInfo.playerInfo.2.team}}</h3>
         <h4>{{DBpediaInfo.playerInfo.3.position}}</h4>
+      </div>
+      {{else}}
+        <h1>Tips:</h1>
+        <h4> You can search both within our database and online using the 'Live' toggle <h4>
+        <h4>Toggle between AND/OR to refine your search</h4>
+        <h4>Some players have DBPedia info that will be displayed here</h4>
       {{/if}}
     </div>
+    {{#if recommendations}} {{! These are the recommended searches that are based on your query. }}
+    <div class = "container col-sm-12">
+      <ol class="rec-list">
+        <li class="rec-heading"> People also searched for: </li>
+        {{#each recommendations}}
+          {{#if this.player_name}}
+            <li> {{this.player_name}},</li>
+          {{/if}}
+          {{#if this.team}}
+            <li> {{this.team}}, </li>
+          {{/if}}
+        {{/each}}
+      </ol>
+    </div>
+    {{/if}}
   <!-- Search Result -->
 
   {{#if query}}

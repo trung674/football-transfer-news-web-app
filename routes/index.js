@@ -351,17 +351,23 @@ function getRecAndRender(tweets, player, team, author, query, isExisted, req, re
             if (error) {
                 throw error;
             } else {
+              if (results.length > 0){
+                getDBPInfo(results[0].player_ID, true, query, player, team, tweetsAPI, author, tweetsDB, tweets, classifiedTweets, recommendations, moment, req, res)
+
+              }
+              else{
                 res.render('index', {
-                    query: query,
-                    player: player,
-                    team: team,
-                    tweets: tweetsAPI,
-                    author: author,
-                    tweetsDB: tweetsDB.length,
-                    classifiedTweets: classifiedTweets,
-                    recommendations: results,
-                    moment: moment
+                  query: query,
+                  player: player,
+                  team: team,
+                  tweets: tweetsAPI,
+                  author: author,
+                  tweetsDB: tweetsDB.length,
+                  classifiedTweets: classifiedTweets,
+                  recommendations: recommendations,
+                  moment: moment
                 });
+              }
             }
         });
       } else {
@@ -380,7 +386,6 @@ function getRecAndRender(tweets, player, team, author, query, isExisted, req, re
 
                       }
                       else{
-                        console.log(typeof tweetsAPI)
                         res.render('index', {
                           query: query,
                           player: player,
@@ -389,7 +394,7 @@ function getRecAndRender(tweets, player, team, author, query, isExisted, req, re
                           author: author,
                           tweetsDB: tweetsDB.length,
                           classifiedTweets: classifiedTweets,
-                          recommendations: results,
+                          recommendations: recommendations,
                           moment: moment
                         });
                       }
@@ -494,7 +499,8 @@ function getDBPInfo(player_id, fromDB, query, player, team, tweetsAPI, author, t
     'dbp:name': '?name',
     'dbo:birthDate': '?birthDate',
     'dbp:currentclub': '?currentclub',
-    'dbp:position': '?position'
+    'dbp:position': '?position',
+    'dbo:thumbnail': '?thumbnail'
   };
 
   myquery.registerVariable( 'DBplayer', DBplayer )
@@ -513,13 +519,15 @@ function getDBPInfo(player_id, fromDB, query, player, team, tweetsAPI, author, t
     var db_position = formatURI(db_position_uri)
     var db_team_uri = data.results.bindings[0].currentclub.value
     var db_team = formatURI(db_team_uri)
-
+    var db_thumbnail = data.results.bindings[0].thumbnail.value
+    console.log(db_thumbnail)
     var DBpediaInfo = {
       playerInfo: [
     {"name":db_player_name},
     {"dob":db_player_dob},
     {"team":db_team},
-    {"position":db_position}
+    {"position":db_position},
+    {"thumbnail":db_thumbnail}
     ]}
 
     if (fromDB) {
@@ -550,9 +558,6 @@ function getDBPInfo(player_id, fromDB, query, player, team, tweetsAPI, author, t
     }
 
   });
-
-
-
   /*
   var queryFront = 'PREFIX dbpedia: <http://dbpedia.org/resource/> PREFIX dbpedia-owl: <http://dbpedia.org/ontology/> PREFIX dbpedia-prop: <http://dbpedia.org/property/> SELECT ?name, ?birthDate, ?currentclub, ?position WHERE { dbpedia:'
   var Fullquery =  queryFront + player_uri + ' dbpedia-owl:abstract ?abstract ; dbpedia-prop:name ?name ; dbpedia-owl:birthDate ?birthDate ; dbpedia-prop:currentclub ?currentclub ; dbpedia-prop:position ?position .filter(langMatches(lang(?abstract),"en"))}';

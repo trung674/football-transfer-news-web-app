@@ -45,8 +45,8 @@
     </div>
     <div class="col-md-6 search-section">
       {{#if DBpediaInfo}}
-      <div class="col-sm-5">
-        <img src="{{DBpediaInfo.playerInfo.4.thumbnail}}" alt="Player_Image" width="200px" style="margin-top:10%;">
+      <div class="col-sm-5 hidden-sm hidden-xs">
+        <img class="img-responsive" src="{{DBpediaInfo.playerInfo.4.thumbnail}}" alt="Player_Image" width="200px" style="margin-top:10%;">
       </div>
       <div class="col-sm-7">
         <h1>{{DBpediaInfo.playerInfo.0.name}} </h1>
@@ -139,7 +139,6 @@
 <script src="/socket.io/socket.io.js"></script>
 <script>
   var socket = io();
-
   socket.on('stream', function(data){
     //var date = moment().format(data.created_at, 'DD-MM-YYYY, h:mm')
     //console.log(date)

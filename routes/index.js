@@ -69,7 +69,6 @@ module.exports = function(io) {
             author = req.body.author.replace(/@/g, "")
             query = query + ' from:' + author; // add author to query
         }
-        console.log(query);
         if (query !== basicKW) {
             if (req.body.api) {
                 var tweetCollection = [];
@@ -460,8 +459,6 @@ function getRecAndRender(tweets, player, team, author, query, isExisted, req, re
             throw error;
         } else {
           var recommendations = results
-          console.log(req.body.player)
-          console.log(results)
           connection.query('SELECT DISTINCT player_ID FROM db_player_names WHERE player_name LIKE "%' + req.body.player + '%" OR player_twitter="' + req.body.author + '" LIMIT 1;', [req.body.player,req.body.author], function(error, results, fields) { // if only player name is given
               if (error) {
                   throw error;
@@ -520,7 +517,6 @@ function getDBPInfo(player_id, fromDB, query, player, team, tweetsAPI, author, t
     var db_team_uri = data.results.bindings[0].currentclub.value
     var db_team = formatURI(db_team_uri)
     var db_thumbnail = data.results.bindings[0].thumbnail.value
-    console.log(db_thumbnail)
     var DBpediaInfo = {
       playerInfo: [
     {"name":db_player_name},

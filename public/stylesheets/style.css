@@ -64,4 +64,10 @@ body {
 .tweet-text:hover {
   text-decoration: none; }
 
+.dbinfo ul {
+  list-style: none; }
+
+.dbinfo ul li {
+  display: inline-block; }
+
 /*# sourceMappingURL=style.css.map */

@@ -58,7 +58,10 @@
       </div>
       {{/if}}
       {{#if DBpediaInfo}}
-        <h1>{{DBpediaInfo.player.0.name}}</h1>
+        <h1>{{DBpediaInfo.playerInfo.0.name}} </h1>
+        <p> ({{DBpediaInfo.playerInfo.1.dob}}) <p>
+        <h3>{{DBpediaInfo.playerInfo.2.team}}</h3>
+        <h4>{{DBpediaInfo.playerInfo.3.position}}</h4>
       {{/if}}
     </div>
   <!-- Search Result -->

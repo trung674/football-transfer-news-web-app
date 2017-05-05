@@ -17,16 +17,16 @@ var T = require('../config/twitter.js');
 var dps = require('dbpedia-sparql-client').default;
 var sparqls = require( 'sparqling-star' );
 
-//connection.query('SELECT DISTINCT player_name FROM db_player_names WHERE player_name LIKE "%' + 'Rooney' + '%" OR player_twitter="' + '' + '" LIMIT 1;', function(error, results, fields) {
-//    if (error)
-//        throw error;
-//        //console.log(results)
-//    else
-//      console.log(results)
-//    }
-//);
-
 /*
+connection.query('DELETE FROM query', function(error, results, fields) {
+    if (error)
+        throw error;
+    else
+      console.log(results)
+    }
+);
+
+
 connection.query('SELECT * FROM tweet', function(error, results, fields) {
     if (error)
         throw error;
@@ -96,7 +96,7 @@ module.exports = function(io) {
                           lang: 'en',
                           since: searched_at
                       }, function(err, data, response) {
-                        console.log("First iteration: " + data.statuses.length);
+                        //console.log("First iteration: " + data.statuses.length);
                         tweetCollection = tweetCollection.concat(data.statuses);
                         getRecAndRender(tweetCollection, player, team, author, query, true, req, res, query_id);
                       });
@@ -108,7 +108,7 @@ module.exports = function(io) {
                         exclude: 'retweets',
                         lang: 'en'
                     }, function(err, data, response) {
-                      console.log("First iteration : " + data.statuses.length);
+                      //console.log("First iteration : " + data.statuses.length);
                       if (data.statuses.length === 0) {
                         res.render('index', {
                           query: query,
@@ -125,7 +125,7 @@ module.exports = function(io) {
                             exclude: 'retweets',
                             lang: 'en'
                         }, function(err1, data1, response1) {
-                          console.log("Second iteration : " + data1.statuses.length);
+                          //console.log("Second iteration : " + data1.statuses.length);
                           if (data1.statuses.length === 1) {
                             getRecAndRender(tweetCollection, player, team, author, query, false, req, res);
                           } else {
@@ -139,7 +139,7 @@ module.exports = function(io) {
                                 exclude: 'retweets',
                                 lang: 'en'
                             }, function(err2, data2, response2) {
-                              console.log("Third iteration : " + data2.statuses.length);
+                              //console.log("Third iteration : " + data2.statuses.length);
                               if (data2.statuses.length === 1) {
                                 getRecAndRender(tweetCollection, player, team, author, query, false, req, res);
                               } else {
@@ -154,7 +154,7 @@ module.exports = function(io) {
                                     exclude: 'retweets',
                                     lang: 'en'
                                 }, function(err3, data3, response3) {
-                                  console.log("Fourth iteration : " + data3.statuses.length);
+                                  //console.log("Fourth iteration : " + data3.statuses.length);
                                   if (data2.statuses.length === 1) {
                                     getRecAndRender(tweetCollection, player, team, author, query, false, req, res);
                                   } else {
@@ -344,7 +344,7 @@ function getRecAndRender(tweets, player, team, author, query, isExisted, req, re
       var dateList = findUniqueDates(tweets);
       classifiedTweets = classifyTweets(dateList, tweets, classifiedTweets);
 
-      if (team !== '') {
+      if (req.body.team !== '') {
         var id = []
         // find terms that are unique to to current query terms and render theem also
         connection.query('SELECT DISTINCT player_name,team FROM query WHERE player_name LIKE "%' + req.body.player + '%" AND team LIKE "%' + req.body.team + '%" ORDER BY created_at DESC LIMIT 3;', [req.body.player,req.body.team], function(error, results, fields) {
@@ -376,18 +376,21 @@ function getRecAndRender(tweets, player, team, author, query, isExisted, req, re
                       throw error;
                   } else {
                       if (results.length > 0){
-                        getDBPInfo(results[0].player_ID, query, player, team, tweets, classifiedTweets, recommendations, moment, req, res)
+                        getDBPInfo(results[0].player_ID, true, query, player, team, tweetsAPI, author, tweetsDB, tweets, classifiedTweets, recommendations, moment, req, res)
 
                       }
                       else{
+                        console.log(typeof tweetsAPI)
                         res.render('index', {
-                            query: query,
-                            player: player,
-                            team: team,
-                            tweets: tweets,
-                            classifiedTweets: classifiedTweets,
-                            recommendations: recommendations,
-                            moment: moment
+                          query: query,
+                          player: player,
+                          team: team,
+                          tweets: tweetsAPI,
+                          author: author,
+                          tweetsDB: tweetsDB.length,
+                          classifiedTweets: classifiedTweets,
+                          recommendations: results,
+                          moment: moment
                         });
                       }
 
@@ -409,23 +412,24 @@ function getRecAndRender(tweets, player, team, author, query, isExisted, req, re
   //get recommendations and render
 
 } else {
-  // insertQueryAndTweets(tweets, query, player, team, author);
+  insertQueryAndTweets(tweets, query, player, team, author);
   var dateList = findUniqueDates(tweets);
   classifiedTweets = classifyTweets(dateList, tweets, classifiedTweets);
-  if (team !== '') {
+  if (req.body.team !== '') {
     var id = []
     // find terms that are unique to to current query terms and render theem also
-    connection.query('SELECT DISTINCT player_name,team FROM query WHERE player_name LIKE "%' + req.body.player + '%" AND team LIKE "%' + req.body.team + '%" ORDER BY created_at DESC LIMIT 3;', [req.body.player,req.body.team], function(error, results, fields) {
+    connection.query('SELECT DISTINCT player_name,team FROM query WHERE player_name LIKE "%' + req.body.player + '%" OR team LIKE "%' + req.body.team + '%" ORDER BY created_at DESC LIMIT 3;', [req.body.player,req.body.team], function(error, results, fields) {
         if (error) {
             throw error;
         } else {
           var recommendations = results
+
           connection.query('SELECT DISTINCT player_ID FROM db_player_names WHERE player_name LIKE "%' + req.body.player + '%" OR player_twitter="' + req.body.author + '" LIMIT 1;', [req.body.player,req.body.author], function(error, results, fields) { // if only player name is given
               if (error) {
                   throw error;
               } else {
                   if (results.length > 0){
-                    getDBPInfo(results[0].player_ID, query, player, team, tweets, classifiedTweets, recommendations, moment, req, res)
+                    getDBPInfo(results[0].player_ID, false, query, player, team, null, null, null, null, classifiedTweets, recommendations, moment, req, res)
 
                   }
                   else{
@@ -451,12 +455,14 @@ function getRecAndRender(tweets, player, team, author, query, isExisted, req, re
             throw error;
         } else {
           var recommendations = results
+          console.log(req.body.player)
+          console.log(results)
           connection.query('SELECT DISTINCT player_ID FROM db_player_names WHERE player_name LIKE "%' + req.body.player + '%" OR player_twitter="' + req.body.author + '" LIMIT 1;', [req.body.player,req.body.author], function(error, results, fields) { // if only player name is given
               if (error) {
                   throw error;
               } else {
                   if (results.length > 0){
-                    getDBPInfo(results[0].player_ID, query, player, team, tweets, classifiedTweets, recommendations, moment, req, res)
+                    getDBPInfo(results[0].player_ID, false, query, player, team, null, null, null, tweets, classifiedTweets, recommendations, moment, req, res)
 
                   }
                   else{
@@ -478,12 +484,12 @@ function getRecAndRender(tweets, player, team, author, query, isExisted, req, re
   }
 }
 }
-function getDBPInfo(player_id, query, player, team, tweets, classifiedTweets, recommendations, moment, req, res){
+function getDBPInfo(player_id, fromDB, query, player, team, tweetsAPI, author, tweetsDB, tweets, classifiedTweets, recommendations, moment, req, res){
   var myquery = new sparqls.Query({
       'limit': 1
   });
 
-  var player = {
+  var DBplayer = {
   	'dbo:wikiPageID': player_id,
     'dbp:name': '?name',
     'dbo:birthDate': '?birthDate',
@@ -491,7 +497,7 @@ function getDBPInfo(player_id, query, player, team, tweets, classifiedTweets, re
     'dbp:position': '?position'
   };
 
-  myquery.registerVariable( 'player', player )
+  myquery.registerVariable( 'DBplayer', DBplayer )
          .registerPrefix( 'dbres', '<http://dbpedia.org/resource/>' )
          .registerPrefix( 'dbowl', '<http://dbpedia.org/ontology/>' )
          .registerPrefix( 'dbprop', '<http://dbpedia.org/property/>' )
@@ -507,31 +513,42 @@ function getDBPInfo(player_id, query, player, team, tweets, classifiedTweets, re
     var db_position = formatURI(db_position_uri)
     var db_team_uri = data.results.bindings[0].currentclub.value
     var db_team = formatURI(db_team_uri)
-    //console.log(db_player_name)
-    //console.log(db_player_dob)
-    //console.log(db_position)
-    //console.log(db_team)
-
-    //var DBpediaInfo = [db_player_name, db_player_dob, db_team, db_position]
 
     var DBpediaInfo = {
-      player: [
+      playerInfo: [
     {"name":db_player_name},
     {"dob":db_player_dob},
     {"team":db_team},
     {"position":db_position}
     ]}
 
-    res.render('index', {
-        query: query,
-        player: player,
-        team: team,
-        tweets: tweets,
-        classifiedTweets: classifiedTweets,
-        recommendations: recommendations,
-        moment: moment,
-        DBpediaInfo: DBpediaInfo
-    });
+    if (fromDB) {
+        res.render('index', {
+          query: query,
+          player: player,
+          team: team,
+          tweets: tweetsAPI,
+          author: author,
+          tweetsDB: tweetsDB.length,
+          classifiedTweets: classifiedTweets,
+          recommendations: recommendations,
+          moment: moment,
+          DBpediaInfo: DBpediaInfo
+        });
+    }
+    else{
+      res.render('index', {
+          query: query,
+          player: player,
+          team: team,
+          tweets: tweets,
+          classifiedTweets: classifiedTweets,
+          recommendations: recommendations,
+          moment: moment,
+          DBpediaInfo: DBpediaInfo
+      });
+    }
+
   });
 
 

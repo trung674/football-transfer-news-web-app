@@ -83,17 +83,17 @@ module.exports = function(io) {
                   // if the query already existed in database, search with "since" and "since_id" property, else normal search
                   if (results.length === 1) {
                     var query_id = results[0].query_id;
-                    var searched_at = moment(results[0].created_at).format("YYYY-MM-DD");
+                    var lastSearched = moment(results[0].created_at).format("YYYY-MM-DD");
                     connection.query("SELECT tweet_id FROM tweet WHERE query_id = '" + query_id + "' ORDER BY created_at DESC LIMIT 1 ", function(error, results, fields) {
-                      var last_max_id = results[0].tweet_id;
+                      var lastMaxId = results[0].tweet_id;
                       // Search only next 100 tweets are enough I guess
                       T.get('search/tweets', {
-                          since_id: last_max_id,
+                          since_id: lastMaxId,
                           q: query,
                           count: 100,
                           exclude: 'retweets',
                           lang: 'en',
-                          since: searched_at
+                          since: lastSearched
                       }, function(err, data, response) {
                         //console.log("First iteration: " + data.statuses.length);
                         tweetCollection = tweetCollection.concat(data.statuses);

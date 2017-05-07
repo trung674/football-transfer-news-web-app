@@ -69,14 +69,15 @@ module.exports = function(io) {
             query = query + ' from:' + author; // add author to query
         }
         if (query !== basicKW) {
-            io.on('connection', function(socket) {
-                //stream new tweets
-                streamTweets(streamQuery, io)
-            });
             if (req.body.api) {
                 var tweetCollection = [];
                 // Welcome to callback hell
                 //Initiate twittter tweet stream API and send new tweets to front end when recieved
+                io.on('connection', function(socket) {
+                    //stream new tweets
+                    streamTweets(streamQuery, io)
+                });
+
                 connection.query("SELECT * FROM query WHERE query_text = '" + query + "'", function(error, results, fields) {
                   // if the query already existed in database, search with "since" and "since_id" property, else normal search
                   if (results.length === 1) {

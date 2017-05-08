@@ -130,6 +130,9 @@
         <p>No (new) tweets found on Twitter</p>.
       </div>
     {{/if}}
+    <button onclick="topFunction()" class="toTop" id="toTop" title="Go to top">Top</button>
+    <button onclick="scrollUp()" class="upB" id="upB" title="Go up">&#8673; 5 tweets</button>
+    <button onclick="scrollDown()" class="downB" id="downB" title="Go down">&#8675; 5 tweets</button>
   {{else}}
   {{#if DBtweets}}
     <div class="col-md-12">
@@ -161,6 +164,9 @@
       {{/if}}
     </div>
   {{/if}}
+  <button onclick="topFunction()" class="toTop" id="toTop" title="Go to top">Top</button>
+  <button onclick="scrollUp()" class="upB" id="upB" title="Go up">&#8673; 5 tweets</button>
+  <button onclick="scrollDown()" class="downB" id="downB" title="Go down">&#8675; 5 tweets</button>
   {{/if}}
 {{/if}}
 <script src="/socket.io/socket.io.js"></script>

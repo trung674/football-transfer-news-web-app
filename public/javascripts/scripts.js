@@ -41,17 +41,20 @@ $(document).ready(function() {
 window.onscroll = function() {scrollFunction()};
 
 function scrollFunction() {
-    if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+    if (document.body.scrollTop > 500 || document.documentElement.scrollTop > 500) {
         document.getElementById("toTop").style.display = "block";
+        document.getElementById("upB").style.display = "block";
+
     } else {
         document.getElementById("toTop").style.display = "none";
+        document.getElementById("upB").style.display = "none";
     }
 }
 
 // When button is clicked, scroll to the top of the document
 function topFunction() {
     document.body.scrollTop = 0;
-    document.documentElement.scrollTop = 0; 
+    document.documentElement.scrollTop = 0;
 }
 
 function scrollDown() {

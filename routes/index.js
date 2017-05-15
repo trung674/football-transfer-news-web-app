@@ -560,21 +560,34 @@ function getDBPInfo(io, player_id, fromCache, fromDB, query, player, team, tweet
   var sparqler = new sparqls.Client();
   //console.log(myquery.sparqlQuery)
   sparqler.send( myquery, function( error, data ) {
-    var db_player_name = data.results.bindings[0].name.value
-    var db_player_dob = data.results.bindings[0].birthDate.value
-    var db_position_uri = data.results.bindings[0].position.value
-    var db_position = formatURI(db_position_uri)
-    var db_team_uri = data.results.bindings[0].currentclub.value
-    var db_team = formatURI(db_team_uri)
-    var db_thumbnail = data.results.bindings[0].thumbnail.value
-    var DBpediaInfo = {
-      playerInfo: [
-    {"name":db_player_name},
-    {"dob":db_player_dob},
-    {"team":db_team},
-    {"position":db_position},
-    {"thumbnail":db_thumbnail}
-    ]}
+    if (data.results.bindings[0] !== undefined){
+      var db_player_name = data.results.bindings[0].name.value
+      var db_player_dob = data.results.bindings[0].birthDate.value
+      var db_position_uri = data.results.bindings[0].position.value
+      var db_position = formatURI(db_position_uri)
+      var db_team_uri = data.results.bindings[0].currentclub.value
+      var db_team = formatURI(db_team_uri)
+      var db_thumbnail = data.results.bindings[0].thumbnail.value
+      var DBpediaInfo = {
+        playerInfo: [
+      {"name":db_player_name},
+      {"dob":db_player_dob},
+      {"team":db_team},
+      {"position":db_position},
+      {"thumbnail":db_thumbnail}
+      ]}
+    }
+    else {
+      var DBpediaInfo = {
+        playerInfo: [
+      {"name":''},
+      {"dob":''},
+      {"team":''},
+      {"position":''},
+      {"thumbnail":''}
+      ]}
+    }
+
 
     if (fromCache) {
         io.on('connection', function(socket) {

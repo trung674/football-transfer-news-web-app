@@ -87,6 +87,28 @@
     <div class="col-md-12">
       <div class="panel panel-default">
         <div class="panel-heading">Frequency Analysis</div>
+      </canvas><canvas id="myChart"></canvas>
+        <script src="/socket.io/socket.io.js"></script>
+        <script>
+
+              var socket = io();
+              socket.on('classifiedTweetsStream', function(data){
+                console.log("K")
+              });
+
+              var ctx = document.getElementById('myChart').getContext('2d');
+              var myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                  labels: ['M', 'T', 'W', 'T', 'F', 'S', 'S'],
+                  datasets: [{
+                    label: 'Tweets',
+                    data: [250, 102, 1259],
+                    backgroundColor: "rgba(153,255,51,0.4)"
+                  }]
+                }
+              });
+      </script>
         <div class="panel-body">
           {{{formatArray classifiedTweets}}}
         </div>
@@ -112,8 +134,7 @@
           <p class="bg bg-info">There are {{tweetsDB}} tweets about this query in the database !</p>
         {{/if}} <!-- end #if tweetsDB -->
       </div>
-    {{/if}} <!-- end #if tweetsDB -->
-  {{else}} <!-- else #if tweets -->
+    {{/if}}
     {{#if DBtweets}}
       <!-- Display Tweets  -->
       {{#each DBtweets}}
@@ -128,9 +149,50 @@
            </div>
          </div>
       {{/each}}
-    {{/if}} <!-- else #if DBtweets -->
-  {{/if}} <!-- else #if tweets -->
-{{/if}} <!-- else #if query -->
+    {{else}}
+      <div class="col-md-12 tweet-container">
+        <p>No (new) tweets found on Twitter</p>.
+      </div>
+    {{/if}}
+    <button onclick="topFunction()" class="toTop" id="toTop" title="Go to top">Top</button>
+    <button onclick="scrollUp()" class="upB" id="upB" title="Go up">&#8673; 5 tweets</button>
+    <button onclick="scrollDown()" class="downB" id="downB" title="Go down">&#8675; 5 tweets</button>
+  {{else}}
+  {{#if DBtweets}}
+    <div class="col-md-12">
+      <div class="panel panel-default">
+        <div class="panel-heading">Frequency Analysis</div>
+        <div class="panel-body">
+          {{{formatArray classifiedTweets}}}
+        </div>
+      </div>
+    </div>
+    <!-- Display Tweets  -->
+    {{#each DBtweets}}
+      <div hidden class="col-md-12 tweet-container">
+         <div class="panel panel-success">
+           <!-- Search team name via DBPedia I think -->
+           <div class="panel-heading"><a href="https://www.twitter.com/{{this.username}}" target="_blank">{{this.username}} @{{this.username}}</a></div>
+           <a class="tweet-text" href="https://www.twitter.com/{{this.user.screen_name}}/status/{{this.id_str}}" target="_blank"><div class="panel-body tweet-link-div">{{this.tweet_text}}</div></a>
+           <div class="panel-success panel-footer">
+             <p> Time and date: {{{formatDate this.created_at "DD-MM-YYYY"}}} </p>
+           </div>
+         </div>
+       </div>
+    {{/each}}
+  {{else}}
+    <div class="col-md-12 tweet-container">
+      <p>No (new) tweets found on Twitter</p>.
+      {{#if tweetsDB}}
+        <p class="bg bg-info">There are {{tweetsDB}} tweets about this query in the database !</p>
+      {{/if}}
+    </div>
+  {{/if}}
+  <button onclick="topFunction()" class="toTop" id="toTop" title="Go to top">Top</button>
+  <button onclick="scrollUp()" class="upB" id="upB" title="Go up">&#8673; 5 tweets</button>
+  <button onclick="scrollDown()" class="downB" id="downB" title="Go down">&#8675; 5 tweets</button>
+  {{/if}}
+{{/if}}
 <script src="/socket.io/socket.io.js"></script>
 <script>
   var socket = io();

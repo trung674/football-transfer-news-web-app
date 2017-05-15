@@ -18,7 +18,8 @@ body {
 .search-button {
   background-color: #2E8B57 !important;
   border: none !important;
-  min-width: 100% !important; }
+  min-width: 100% !important;
+  border-radius: 0px !important; }
 
 .search-button:hover {
   background-color: #3bb16f !important; }
@@ -69,5 +70,49 @@ body {
 
 .dbinfo ul li {
   display: inline-block; }
+
+.toTop {
+  display: none;
+  position: fixed;
+  bottom: 120px;
+  right: 30px;
+  z-index: 99;
+  border: none;
+  outline: none;
+  background-color: #2E8B57;
+  color: white;
+  cursor: pointer;
+  padding: 10px;
+  border-radius: 0px; }
+
+.upB {
+  display: none;
+  position: fixed;
+  bottom: 70px;
+  right: 30px;
+  z-index: 99;
+  border: none;
+  outline: none;
+  background-color: #2E8B57;
+  color: white;
+  cursor: pointer;
+  padding: 10px;
+  border-radius: 0px; }
+
+.downB {
+  position: fixed;
+  bottom: 20px;
+  right: 30px;
+  z-index: 99;
+  border: none;
+  outline: none;
+  background-color: #2E8B57;
+  color: white;
+  cursor: pointer;
+  padding: 10px;
+  border-radius: 0px; }
+
+.toTop:hover .downB:hover .upB:hover {
+  background-color: #3bb16f !important; }
 
 /*# sourceMappingURL=style.css.map */

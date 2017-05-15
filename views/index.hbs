@@ -87,6 +87,28 @@
     <div class="col-md-12">
       <div class="panel panel-default">
         <div class="panel-heading">Frequency Analysis</div>
+      </canvas><canvas id="myChart"></canvas>
+        <script src="/socket.io/socket.io.js"></script>
+        <script>
+
+              var socket = io();
+              socket.on('classifiedTweetsStream', function(data){
+                console.log("K")
+              });
+
+              var ctx = document.getElementById('myChart').getContext('2d');
+              var myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                  labels: ['M', 'T', 'W', 'T', 'F', 'S', 'S'],
+                  datasets: [{
+                    label: 'Tweets',
+                    data: [250, 102, 1259],
+                    backgroundColor: "rgba(153,255,51,0.4)"
+                  }]
+                }
+              });
+      </script>
         <div class="panel-body">
           {{{formatArray classifiedTweets}}}
         </div>

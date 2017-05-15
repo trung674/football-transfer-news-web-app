@@ -87,30 +87,13 @@
     <div class="col-md-12">
       <div class="panel panel-default">
         <div class="panel-heading">Frequency Analysis</div>
-      </canvas><canvas id="myChart"></canvas>
-        <script src="/socket.io/socket.io.js"></script>
-        <script>
-
-              var socket = io();
-              socket.on('classifiedTweetsStream', function(data){
-                console.log("K")
-              });
-
-              var ctx = document.getElementById('myChart').getContext('2d');
-              var myChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                  labels: ['M', 'T', 'W', 'T', 'F', 'S', 'S'],
-                  datasets: [{
-                    label: 'Tweets',
-                    data: [250, 102, 1259],
-                    backgroundColor: "rgba(153,255,51,0.4)"
-                  }]
-                }
-              });
-      </script>
         <div class="panel-body">
-          {{{formatArray classifiedTweets}}}
+          <div class="col-sm-6">
+            </canvs><canvas id="freqGraph"></canvas>
+          </div>
+          <div class="col-sm-6">
+            {{{formatArray classifiedTweets}}}
+          </div>
         </div>
       </div>
     </div>
@@ -163,7 +146,12 @@
       <div class="panel panel-default">
         <div class="panel-heading">Frequency Analysis</div>
         <div class="panel-body">
-          {{{formatArray classifiedTweets}}}
+          <div class="col-sm-6">
+            </canvs><canvas id="freqGraph"></canvas>
+          </div>
+          <div class="col-sm-6">
+            {{{formatArray classifiedTweets}}}
+          </div>
         </div>
       </div>
     </div>
@@ -192,8 +180,38 @@
   <button onclick="scrollUp()" class="upB" id="upB" title="Go up">&#8673; 5 tweets</button>
   <button onclick="scrollDown()" class="downB" id="downB" title="Go down">&#8675; 5 tweets</button>
   {{/if}}
+  <script>
+  var socket = io();
+  socket.on('graph_info', function(data){
+    if (data){
+
+      var dates = []
+      var freqs = []
+
+      for (group = 0 ; group < data.length ; group++) {
+        var date = new Date(data[group][0].created_at).toDateString();
+        var freq = data[group].length
+        dates.push(date);
+        freqs.push(freq);
+      }
+
+      var ctx = document.getElementById('freqGraph').getContext('2d');
+      var freqGraph = new Chart(ctx, {
+        type: 'line',
+        responsive: true,
+        data: {
+          labels: dates,
+          datasets: [{
+            label: 'Number of Tweets',
+            data: freqs,
+            backgroundColor: "rgba(153,255,51,0.4)"
+          }]
+        }
+      });
+    }
+  });
+  </script>
 {{/if}}
-<script src="/socket.io/socket.io.js"></script>
 <script>
   var socket = io();
   socket.on('stream', function(data){
@@ -201,6 +219,5 @@
     //console.log(date)
     // text box for new tweets beign streamed.
     $('<div class="panel panel-info"> <div class="panel panel-info new-tweet"> <div class="panel-heading"><a href="https://www.twitter.com/{{' + data.user.screen_name + '}}" target="_blank">' + data.user.name + ' @' + data.user.screen_name + '</a></div> <a class="tweet-text" href="https://www.twitter.com/' + data.user.screen_name + '/status/'+ data.id_str + '" target="_blank"><div class="panel-body tweet-link-div">' + data.text + '</div></a> <div class="panel-success panel-footer"> <p> Time and date:' + data.created_at + '</p> </div> </div> </div>').prependTo($('#tweets-list'));
-
   });
 </script>

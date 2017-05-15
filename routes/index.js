@@ -96,7 +96,7 @@ module.exports = function(io) {
                       }, function(err, data, response) {
                         console.log("First iteration: " + data.statuses.length);
                         tweetCollection = tweetCollection.concat(data.statuses);
-                        getRecAndRender(tweetCollection, player, team, author, query, true, req, res, query_id);
+                        getRecAndRender(io, tweetCollection, player, team, author, query, true, req, res, query_id);
                       });
                     });
                   } else {
@@ -125,7 +125,7 @@ module.exports = function(io) {
                         }, function(err1, data1, response1) {
                           console.log("Second iteration : " + data1.statuses.length);
                           if (data1.statuses.length === 1) {
-                            getRecAndRender(tweetCollection, player, team, author, query, false, req, res);
+                            getRecAndRender(io, tweetCollection, player, team, author, query, false, req, res);
                           } else {
                             // remove duplicate tweet
                             data1.statuses.shift();
@@ -139,7 +139,7 @@ module.exports = function(io) {
                             }, function(err2, data2, response2) {
                               console.log("Third iteration : " + data2.statuses.length);
                               if (data2.statuses.length === 1) {
-                                getRecAndRender(tweetCollection, player, team, author, query, false, req, res);
+                                getRecAndRender(io, tweetCollection, player, team, author, query, false, req, res);
                               } else {
                                 // remove duplicate tweet
                                 data2.statuses.shift();
@@ -154,12 +154,12 @@ module.exports = function(io) {
                                 }, function(err3, data3, response3) {
                                   console.log("Fourth iteration : " + data3.statuses.length);
                                   if (data2.statuses.length === 1) {
-                                    getRecAndRender(tweetCollection, player, team, author, query, false, req, res);
+                                    getRecAndRender(io, tweetCollection, player, team, author, query, false, req, res);
                                   } else {
                                     // remove duplicate tweet
                                     data3.statuses.shift();
                                     tweetCollection = tweetCollection.concat(data3.statuses);
-                                    getRecAndRender(tweetCollection, player, team, author, query, false, req, res);
+                                    getRecAndRender(io, tweetCollection, player, team, author, query, false, req, res);
                                   }
                                 });
                               }
@@ -173,7 +173,7 @@ module.exports = function(io) {
             } else {
                 //get results from the database
                 console.log("Calling getDBResults")
-                getDBResults(player, team, query, req, res);
+                getDBResults(io, player, team, query, req, res);
             }
         } else {
             res.render('index', {message: 'Empty string'});
@@ -186,7 +186,6 @@ module.exports = function(io) {
 function streamTweets(query, io) {
     // get new tweets according to query
     var stream = T.stream('statuses/filter', { track: query  })
-
      stream.on('tweet', function (tweet) {
        //console.log(tweet.text);
        //push new tweets to the front end
@@ -256,100 +255,106 @@ function insertQueryAndTweets(tweets, query, player, team, author) {
 }
 
 // function for offline searching, check if query in database
-function getDBResults(player, team, query, req, res) {
-if (req.body.team !== '') {
-var id = []
-// if team and player given
-connection.query('SELECT * FROM tweet WHERE tweet_text LIKE "%' + req.body.player + '%" AND tweet_text LIKE "%' + req.body.team + '%" ORDER BY created_at DESC', [
-    req.body.player, req.body.team
-], function(error, results, fields) {
-    if (error) {
-        throw error;
-    } else {
-      var classifiedTweets = []
-      var tweetsDB = results
-      var dateList = findUniqueDates(tweetsDB);
-      classifiedTweets = classifyTweets(dateList, tweetsDB, classifiedTweets);
-      connection.query('SELECT DISTINCT player_name,team FROM query WHERE player_name LIKE "%' + req.body.player + '%" AND team LIKE "%' + req.body.team + '%" ORDER BY created_at DESC LIMIT 3;', [req.body.player,req.body.team], function(error, results, fields) {
-          if (error) {
-              throw error;
-          } else {
-            var recommendations = results
-            connection.query('SELECT DISTINCT player_ID FROM db_player_names WHERE player_name LIKE "%' + req.body.player + '%" OR player_twitter="' + req.body.author + '" LIMIT 1;', [req.body.player,req.body.author], function(error, results, fields) { // if only player name is given
-                if (error) {
-                    throw error;
-                } else {
-                    if (results.length > 0){
-                      getDBPInfo(results[0].player_ID, false, true, query, player, team, null, null, tweetsDB, tweetsDB, classifiedTweets, recommendations, moment, req, res)
+function getDBResults(io, player, team, query, req, res) {
+  if (req.body.team !== '') {
+  var id = []
+  // if team and player given
+  connection.query('SELECT * FROM tweet WHERE tweet_text LIKE "%' + req.body.player + '%" AND tweet_text LIKE "%' + req.body.team + '%" ORDER BY created_at DESC', [
+      req.body.player, req.body.team
+  ], function(error, results, fields) {
+      if (error) {
+          throw error;
+      } else {
+        var classifiedTweets = []
+        var tweetsDB = results
+        var dateList = findUniqueDates(tweetsDB);
+        classifiedTweets = classifyTweets(dateList, tweetsDB, classifiedTweets);
+        io.on('connection', function(socket) {
+          io.emit('graph_info', classifiedTweets);
+        });
+        connection.query('SELECT DISTINCT player_name,team FROM query WHERE player_name LIKE "%' + req.body.player + '%" AND team LIKE "%' + req.body.team + '%" ORDER BY created_at DESC LIMIT 3;', [req.body.player,req.body.team], function(error, results, fields) {
+            if (error) {
+                throw error;
+            } else {
+              var recommendations = results
+              connection.query('SELECT DISTINCT player_ID FROM db_player_names WHERE player_name LIKE "%' + req.body.player + '%" OR player_twitter="' + req.body.author + '" LIMIT 1;', [req.body.player,req.body.author], function(error, results, fields) { // if only player name is given
+                  if (error) {
+                      throw error;
+                  } else {
+                      if (results.length > 0){
+                        getDBPInfo(results[0].player_ID, false, true, query, player, team, null, null, tweetsDB, tweetsDB, classifiedTweets, recommendations, moment, req, res)
 
-                    }
-                    else{
-                      console.log("team + player DB")
-                      res.render('index', {
-                          query: query,
-                          player: player,
-                          team: team,
-                          DBtweets: tweetsDB,
-                          moment: moment,
-                          recommendations: recommendations,
-                          classifiedTweets: classifiedTweets
-                      });
-                    }
+                      }
+                      else{
+                        console.log("team + player DB")
+                        res.render('index', {
+                            query: query,
+                            player: player,
+                            team: team,
+                            DBtweets: tweetsDB,
+                            moment: moment,
+                            recommendations: recommendations,
+                            classifiedTweets: classifiedTweets
+                        });
+                      }
 
-                }
-            });
-          }
-      });
+                  }
+              });
+            }
+        });
 
-    }
-});
-} else {
-var id = []
-// if only player given
-connection.query('SELECT * FROM tweet WHERE tweet_text LIKE "%' + req.body.player + '%" ORDER BY created_at DESC', req.body.player, function(error, results, fields) {
-    if (error) {
-        throw error;
-    } else {
-      var classifiedTweets = []
-      var tweetsDB = results
-      var dateList = findUniqueDates(tweetsDB);
-      classifiedTweets = classifyTweets(dateList, tweetsDB, classifiedTweets);
-      connection.query('SELECT DISTINCT player_name,team FROM query WHERE player_name LIKE "%' + req.body.player + '%" AND team LIKE "%' + req.body.team + '%" ORDER BY created_at DESC LIMIT 3;', [req.body.player,req.body.team], function(error, results, fields) {
-          if (error) {
-              throw error;
-          } else {
-            var recommendations = results
-            connection.query('SELECT DISTINCT player_ID FROM db_player_names WHERE player_name LIKE "%' + req.body.player + '%" OR player_twitter="' + req.body.author + '" LIMIT 1;', [req.body.player,req.body.author], function(error, results, fields) { // if only player name is given
-                if (error) {
-                    throw error;
-                } else {
-                    if (results.length > 0){
-                      getDBPInfo(results[0].player_ID, false, true, query, player, team, null, null, tweetsDB, tweetsDB, classifiedTweets, recommendations, moment, req, res)
-                    }
-                    else{
-                      console.log("player not on db")
-                      res.render('index', {
-                          query: query,
-                          player: player,
-                          team: team,
-                          DBtweets: tweetsDB,
-                          moment: moment,
-                          recommendations: recommendations,
-                          classifiedTweets: classifiedTweets
-                      });
-                    }
+      }
+  });
+  } else {
+  var id = []
+  // if only player given
+  connection.query('SELECT * FROM tweet WHERE tweet_text LIKE "%' + req.body.player + '%" ORDER BY created_at DESC', req.body.player, function(error, results, fields) {
+      if (error) {
+          throw error;
+      } else {
+        var classifiedTweets = []
+        var tweetsDB = results
+        var dateList = findUniqueDates(tweetsDB);
+        classifiedTweets = classifyTweets(dateList, tweetsDB, classifiedTweets);
+        io.on('connection', function(socket) {
+          io.emit('graph_info', classifiedTweets);
+        });
+        connection.query('SELECT DISTINCT player_name,team FROM query WHERE player_name LIKE "%' + req.body.player + '%" AND team LIKE "%' + req.body.team + '%" ORDER BY created_at DESC LIMIT 3;', [req.body.player,req.body.team], function(error, results, fields) {
+            if (error) {
+                throw error;
+            } else {
+              var recommendations = results
+              connection.query('SELECT DISTINCT player_ID FROM db_player_names WHERE player_name LIKE "%' + req.body.player + '%" OR player_twitter="' + req.body.author + '" LIMIT 1;', [req.body.player,req.body.author], function(error, results, fields) { // if only player name is given
+                  if (error) {
+                      throw error;
+                  } else {
+                      if (results.length > 0){
+                        getDBPInfo(results[0].player_ID, false, true, query, player, team, null, null, tweetsDB, tweetsDB, classifiedTweets, recommendations, moment, req, res)
+                      }
+                      else{
+                        console.log("player not on db")
+                        res.render('index', {
+                            query: query,
+                            player: player,
+                            team: team,
+                            DBtweets: tweetsDB,
+                            moment: moment,
+                            recommendations: recommendations,
+                            classifiedTweets: classifiedTweets
+                        });
+                      }
 
-                }
-            });
-          }
-      });
+                  }
+              });
+            }
+        });
 
-    }
-});
+      }
+  });
+  }
 }
-}
 
-function getRecAndRender(tweets, player, team, author, query, isExisted, req, res, query_id) {
+function getRecAndRender(io, tweets, player, team, author, query, isExisted, req, res, query_id) {
   // Frequency Analysis
   var classifiedTweets = [];
   var tweetsDB = [];
@@ -362,6 +367,10 @@ function getRecAndRender(tweets, player, team, author, query, isExisted, req, re
       tweets = tweets.concat(tweetsDB);
       var dateList = findUniqueDates(tweets);
       classifiedTweets = classifyTweets(dateList, tweets, classifiedTweets);
+      //console.log(classifiedTweets)
+      io.on('connection', function(socket) {
+        io.emit('graph_info', classifiedTweets);
+      });
       if (req.body.team !== '') {
         var id = []
         // find terms that are unique to to current query terms and render theem also
@@ -439,6 +448,10 @@ function getRecAndRender(tweets, player, team, author, query, isExisted, req, re
   insertQueryAndTweets(tweets, query, player, team, author);
   var dateList = findUniqueDates(tweets);
   classifiedTweets = classifyTweets(dateList, tweets, classifiedTweets);
+  //console.log(classifiedTweets)
+  io.on('connection', function(socket) {
+    io.emit('graph_info', classifiedTweets);
+  });
   if (req.body.team !== '') {
     var id = []
     // find terms that are unique to to current query terms and render theem also

@@ -73,6 +73,7 @@ module.exports = function(io) {
                 var tweetCollection = [];
                 // Welcome to callback hell
                 //Initiate twittter tweet stream API and send new tweets to front end when recieved
+                console.log(streamQuery)
                 io.on('connection', function(socket) {
                     //stream new tweets
                     streamTweets(streamQuery, io)
@@ -96,6 +97,8 @@ module.exports = function(io) {
                       }, function(err, data, response) {
                         console.log("First iteration: " + data.statuses.length);
                         tweetCollection = tweetCollection.concat(data.statuses);
+
+                        console.log(tweetCollection.length)
                         getRecAndRender(io, tweetCollection, player, team, author, query, true, req, res, query_id);
                       });
                     });
@@ -106,7 +109,7 @@ module.exports = function(io) {
                         exclude: 'retweets',
                         lang: 'en'
                     }, function(err, data, response) {
-                      console.log("First iteration : " + data.statuses.length);
+                      console.log("First iteration1 : " + data.statuses.length);
                       if (data.statuses.length === 0) {
                         res.render('index', {
                           query: query,
@@ -116,6 +119,8 @@ module.exports = function(io) {
                         });
                       } else {
                         tweetCollection = tweetCollection.concat(data.statuses);
+                        console.log(tweetCollection.length)
+
                         T.get('search/tweets', {
                             max_id: data.statuses.pop().id_str,
                             q: query,
@@ -124,12 +129,15 @@ module.exports = function(io) {
                             lang: 'en'
                         }, function(err1, data1, response1) {
                           console.log("Second iteration : " + data1.statuses.length);
+
                           if (data1.statuses.length === 1) {
                             getRecAndRender(io, tweetCollection, player, team, author, query, false, req, res);
                           } else {
                             // remove duplicate tweet
                             data1.statuses.shift();
                             tweetCollection = tweetCollection.concat(data1.statuses);
+                            console.log(tweetCollection.length)
+
                             T.get('search/tweets', {
                                 max_id: data1.statuses.pop().id_str,
                                 q: query,
@@ -144,6 +152,7 @@ module.exports = function(io) {
                                 // remove duplicate tweet
                                 data2.statuses.shift();
                                 tweetCollection = tweetCollection.concat(data2.statuses);
+                                console.log(tweetCollection.length)
                                 // 4th call to compensate for removing dupicate tweets
                                 T.get('search/tweets', {
                                     max_id: data2.statuses.pop().id_str,
@@ -159,6 +168,7 @@ module.exports = function(io) {
                                     // remove duplicate tweet
                                     data3.statuses.shift();
                                     tweetCollection = tweetCollection.concat(data3.statuses);
+                                    console.log(tweetCollection.length)
                                     getRecAndRender(io, tweetCollection, player, team, author, query, false, req, res);
                                   }
                                 });
@@ -269,9 +279,6 @@ function getDBResults(io, player, team, query, req, res) {
         var tweetsDB = results
         var dateList = findUniqueDates(tweetsDB);
         classifiedTweets = classifyTweets(dateList, tweetsDB, classifiedTweets);
-        io.on('connection', function(socket) {
-          io.emit('graph_info', classifiedTweets);
-        });
         connection.query('SELECT DISTINCT player_name,team FROM query WHERE player_name LIKE "%' + req.body.player + '%" AND team LIKE "%' + req.body.team + '%" ORDER BY created_at DESC LIMIT 3;', [req.body.player,req.body.team], function(error, results, fields) {
             if (error) {
                 throw error;
@@ -282,10 +289,13 @@ function getDBResults(io, player, team, query, req, res) {
                       throw error;
                   } else {
                       if (results.length > 0){
-                        getDBPInfo(results[0].player_ID, false, true, query, player, team, null, null, tweetsDB, tweetsDB, classifiedTweets, recommendations, moment, req, res)
+                        getDBPInfo(io, results[0].player_ID, false, true, query, player, team, null, null, tweetsDB, tweetsDB, classifiedTweets, recommendations, moment, req, res)
 
                       }
                       else{
+                        io.on('connection', function(socket) {
+                          io.emit('graph_info', classifiedTweets);
+                        });
                         console.log("team + player DB")
                         res.render('index', {
                             query: query,
@@ -316,9 +326,6 @@ function getDBResults(io, player, team, query, req, res) {
         var tweetsDB = results
         var dateList = findUniqueDates(tweetsDB);
         classifiedTweets = classifyTweets(dateList, tweetsDB, classifiedTweets);
-        io.on('connection', function(socket) {
-          io.emit('graph_info', classifiedTweets);
-        });
         connection.query('SELECT DISTINCT player_name,team FROM query WHERE player_name LIKE "%' + req.body.player + '%" AND team LIKE "%' + req.body.team + '%" ORDER BY created_at DESC LIMIT 3;', [req.body.player,req.body.team], function(error, results, fields) {
             if (error) {
                 throw error;
@@ -329,10 +336,13 @@ function getDBResults(io, player, team, query, req, res) {
                       throw error;
                   } else {
                       if (results.length > 0){
-                        getDBPInfo(results[0].player_ID, false, true, query, player, team, null, null, tweetsDB, tweetsDB, classifiedTweets, recommendations, moment, req, res)
+                        getDBPInfo(io, results[0].player_ID, false, true, query, player, team, null, null, tweetsDB, tweetsDB, classifiedTweets, recommendations, moment, req, res)
                       }
                       else{
                         console.log("player not on db")
+                        io.on('connection', function(socket) {
+                          io.emit('graph_info', classifiedTweets);
+                        });
                         res.render('index', {
                             query: query,
                             player: player,
@@ -368,9 +378,6 @@ function getRecAndRender(io, tweets, player, team, author, query, isExisted, req
       var dateList = findUniqueDates(tweets);
       classifiedTweets = classifyTweets(dateList, tweets, classifiedTweets);
       //console.log(classifiedTweets)
-      io.on('connection', function(socket) {
-        io.emit('graph_info', classifiedTweets);
-      });
       if (req.body.team !== '') {
         var id = []
         // find terms that are unique to to current query terms and render theem also
@@ -385,10 +392,13 @@ function getRecAndRender(io, tweets, player, team, author, query, isExisted, req
                       throw error;
                   } else {
                       if (results.length > 0) {
-                        getDBPInfo(results[0].player_ID, true, false, query, player, team, tweetsAPI, null, tweetsDB, null, classifiedTweets, recommendations, moment, req, res)
+                        getDBPInfo(io, results[0].player_ID, true, false, query, player, team, tweetsAPI, null, tweetsDB, null, classifiedTweets, recommendations, moment, req, res)
                       }
                       else {
                         console.log("player not on db")
+                        io.on('connection', function(socket) {
+                          io.emit('graph_info', classifiedTweets);
+                        });
                         res.render('index', {
                           query: query,
                           player: player,
@@ -419,10 +429,13 @@ function getRecAndRender(io, tweets, player, team, author, query, isExisted, req
                       throw error;
                   } else {
                       if (results.length > 0){
-                        getDBPInfo(results[0].player_ID, true, false, query, player, team, tweetsAPI, null, tweetsDB, null, classifiedTweets, recommendations, moment, req, res)
+                        getDBPInfo(io, results[0].player_ID, true, false, query, player, team, tweetsAPI, null, tweetsDB, null, classifiedTweets, recommendations, moment, req, res)
                       }
                       else{
                         console.log("player not on db")
+                        io.on('connection', function(socket) {
+                          io.emit('graph_info', classifiedTweets);
+                        });
                         res.render('index', {
                           query: query,
                           player: player,
@@ -449,9 +462,6 @@ function getRecAndRender(io, tweets, player, team, author, query, isExisted, req
   var dateList = findUniqueDates(tweets);
   classifiedTweets = classifyTweets(dateList, tweets, classifiedTweets);
   //console.log(classifiedTweets)
-  io.on('connection', function(socket) {
-    io.emit('graph_info', classifiedTweets);
-  });
   if (req.body.team !== '') {
     var id = []
     // find terms that are unique to to current query terms and render theem also
@@ -466,10 +476,13 @@ function getRecAndRender(io, tweets, player, team, author, query, isExisted, req
                   throw error;
               } else {
                   if (results.length > 0){
-                    getDBPInfo(results[0].player_ID, false, false, query, player, team, null, null, null, null, classifiedTweets, recommendations, moment, req, res)
+                    getDBPInfo(io, results[0].player_ID, false, false, query, player, team, null, null, null, null, classifiedTweets, recommendations, moment, req, res)
 
                   }
                   else{
+                    io.on('connection', function(socket) {
+                      io.emit('graph_info', classifiedTweets);
+                    });
                     res.render('index', {
                         query: query,
                         player: player,
@@ -497,10 +510,13 @@ function getRecAndRender(io, tweets, player, team, author, query, isExisted, req
                   throw error;
               } else {
                   if (results.length > 0){
-                    getDBPInfo(results[0].player_ID, false, false, query, player, team, null, null, null, tweets, classifiedTweets, recommendations, moment, req, res)
+                    getDBPInfo(io, results[0].player_ID, false, false, query, player, team, null, null, null, tweets, classifiedTweets, recommendations, moment, req, res)
 
                   }
                   else{
+                    io.on('connection', function(socket) {
+                      io.emit('graph_info', classifiedTweets);
+                    });
                     res.render('index', {
                         query: query,
                         player: player,
@@ -520,7 +536,7 @@ function getRecAndRender(io, tweets, player, team, author, query, isExisted, req
 }
 }
 
-function getDBPInfo(player_id, fromCache, fromDB, query, player, team, tweetsAPI, author, tweetsDB, tweets, classifiedTweets, recommendations, moment, req, res){
+function getDBPInfo(io, player_id, fromCache, fromDB, query, player, team, tweetsAPI, author, tweetsDB, tweets, classifiedTweets, recommendations, moment, req, res){
   var myquery = new sparqls.Query({
       'limit': 1
   });
@@ -561,6 +577,9 @@ function getDBPInfo(player_id, fromCache, fromDB, query, player, team, tweetsAPI
     ]}
 
     if (fromCache) {
+        io.on('connection', function(socket) {
+          io.emit('graph_info', classifiedTweets);
+        });
         res.render('index', {
           query: query,
           player: player,
@@ -576,6 +595,9 @@ function getDBPInfo(player_id, fromCache, fromDB, query, player, team, tweetsAPI
         });
     }
     else if (fromDB){
+      io.on('connection', function(socket) {
+        io.emit('graph_info', classifiedTweets);
+      });
       res.render('index', {
           query: query,
           player: player,
@@ -589,6 +611,9 @@ function getDBPInfo(player_id, fromCache, fromDB, query, player, team, tweetsAPI
       });
     }
     else{
+      io.on('connection', function(socket) {
+        io.emit('graph_info', classifiedTweets);
+      });
       res.render('index', {
           query: query,
           player: player,

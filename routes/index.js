@@ -384,10 +384,10 @@ function getRecAndRender(io, tweets, player, team, author, query, isExisted, req
                   if (error) {
                       throw error;
                   } else {
-                      if (results.length > 0){
+                      if (results.length > 0) {
                         getDBPInfo(results[0].player_ID, true, false, query, player, team, tweetsAPI, null, tweetsDB, null, classifiedTweets, recommendations, moment, req, res)
                       }
-                      else{
+                      else {
                         console.log("player not on db")
                         res.render('index', {
                           query: query,
@@ -402,10 +402,10 @@ function getRecAndRender(io, tweets, player, team, author, query, isExisted, req
                           moment: moment
                         });
                       }
-
                   }
               });
             }
+          }
         });
       } else {
         var id = []

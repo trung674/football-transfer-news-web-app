@@ -95,7 +95,7 @@ module.exports = function(io) {
                           lang: 'en',
                           since: lastSearched
                       }, function(err, data, response) {
-                        //console.log("First iteration: " + data.statuses.length);
+                        console.log("First iteration: " + data.statuses.length);
                         tweetCollection = tweetCollection.concat(data.statuses);
                         getRecAndRender(tweetCollection, player, team, author, query, true, req, res, query_id);
                       });
@@ -107,7 +107,7 @@ module.exports = function(io) {
                         exclude: 'retweets',
                         lang: 'en'
                     }, function(err, data, response) {
-                      //console.log("First iteration : " + data.statuses.length);
+                      console.log("First iteration : " + data.statuses.length);
                       if (data.statuses.length === 0) {
                         res.render('index', {
                           query: query,
@@ -124,7 +124,7 @@ module.exports = function(io) {
                             exclude: 'retweets',
                             lang: 'en'
                         }, function(err1, data1, response1) {
-                          //console.log("Second iteration : " + data1.statuses.length);
+                          console.log("Second iteration : " + data1.statuses.length);
                           if (data1.statuses.length === 1) {
                             getRecAndRender(tweetCollection, player, team, author, query, false, req, res);
                           } else {
@@ -138,7 +138,7 @@ module.exports = function(io) {
                                 exclude: 'retweets',
                                 lang: 'en'
                             }, function(err2, data2, response2) {
-                              //console.log("Third iteration : " + data2.statuses.length);
+                              console.log("Third iteration : " + data2.statuses.length);
                               if (data2.statuses.length === 1) {
                                 getRecAndRender(tweetCollection, player, team, author, query, false, req, res);
                               } else {
@@ -153,7 +153,7 @@ module.exports = function(io) {
                                     exclude: 'retweets',
                                     lang: 'en'
                                 }, function(err3, data3, response3) {
-                                  //console.log("Fourth iteration : " + data3.statuses.length);
+                                  console.log("Fourth iteration : " + data3.statuses.length);
                                   if (data2.statuses.length === 1) {
                                     getRecAndRender(tweetCollection, player, team, author, query, false, req, res);
                                   } else {
@@ -350,7 +350,8 @@ function getRecAndRender(tweets, player, team, author, query, isExisted, req, re
             if (error) {
                 throw error;
             } else {
-              if (results.length > 0){
+              if (results.length > 0) {
+                var recommendations = results;
                 getDBPInfo(results[0].player_ID, true, query, player, team, tweetsAPI, author, tweetsDB, tweets, classifiedTweets, recommendations, moment, req, res)
 
               }
@@ -375,7 +376,7 @@ function getRecAndRender(tweets, player, team, author, query, isExisted, req, re
             if (error) {
                 throw error;
             } else {
-              var recommendations = results
+              var recommendations = results;
               connection.query('SELECT DISTINCT player_ID FROM db_player_names WHERE player_name LIKE "%' + req.body.player + '%" OR player_twitter="' + req.body.author + '" LIMIT 1;', [req.body.player,req.body.author], function(error, results, fields) { // if only player name is given
                   if (error) {
                       throw error;

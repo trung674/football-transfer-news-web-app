@@ -75,7 +75,7 @@
         {{/each}}
       </ol>
     </div>
-    {{/if}}
+    {{/if}} <!-- end #if recommendations -->
   <!-- Search Result -->
 
   {{#if query}}
@@ -93,7 +93,7 @@
       </div>
     </div>
     <!-- Display Tweets  -->
-    {{#each tweets }}
+    {{#each tweets}}
       <div hidden class="col-md-12 tweet-container"  id='tweets-list'>
          <div class="panel panel-success">
            <!-- Search team name via DBPedia I think -->
@@ -105,37 +105,32 @@
          </div>
        </div>
     {{/each}}
-
     {{#if tweetsDB}}
       <div class="col-md-12 tweet-container">
-        <p class="bg bg-info">There are {{tweetsDB}} tweets about this query in the database !</p>
+        <p>No (new) tweets found on Twitter</p>.
+        {{#if tweetsDB}}
+          <p class="bg bg-info">There are {{tweetsDB}} tweets about this query in the database !</p>
+        {{/if}} <!-- end #if tweetsDB -->
       </div>
-    {{/if}}
-  {{else}}
-  {{#if DBtweets}}
-    <!-- Display Tweets  -->
-    {{#each DBtweets}}
-      <div hidden class="col-md-12 tweet-container">
-         <div class="panel panel-success">
-           <!-- Search team name via DBPedia I think -->
-           <div class="panel-heading"><a href="https://www.twitter.com/{{this.username}}" target="_blank">{{this.username}} @{{this.username}}</a></div>
-           <a class="tweet-text" href="https://www.twitter.com/{{this.user.screen_name}}/status/{{this.id_str}}" target="_blank"><div class="panel-body tweet-link-div">{{this.tweet_text}}</div></a>
-           <div class="panel-success panel-footer">
-             <p> Time and date: {{{formatDate this.created_at "DD-MM-YYYY"}}} </p>
+    {{/if}} <!-- end #if tweetsDB -->
+  {{else}} <!-- else #if tweets -->
+    {{#if DBtweets}}
+      <!-- Display Tweets  -->
+      {{#each DBtweets}}
+        <div hidden class="col-md-12 tweet-container">
+           <div class="panel panel-success">
+             <!-- Search team name via DBPedia I think -->
+             <div class="panel-heading"><a href="https://www.twitter.com/{{this.username}}" target="_blank">{{this.username}} @{{this.username}}</a></div>
+             <a class="tweet-text" href="https://www.twitter.com/{{this.user.screen_name}}/status/{{this.id_str}}" target="_blank"><div class="panel-body tweet-link-div">{{this.tweet_text}}</div></a>
+             <div class="panel-success panel-footer">
+               <p> Time and date: {{{formatDate this.created_at "DD-MM-YYYY"}}} </p>
+             </div>
            </div>
          </div>
-       </div>
-    {{/each}}
-  {{else}}
-    <div class="col-md-12 tweet-container">
-      <p>No (new) tweets found on Twitter</p>.
-      {{#if tweetsDB}}
-        <p class="bg bg-info">There are {{tweetsDB}} tweets about this query in the database !</p>
-      {{/if}}
-    </div>
-  {{/if}}
-  {{/if}}
-{{/if}}
+      {{/each}}
+    {{/if}} <!-- else #if DBtweets -->
+  {{/if}} <!-- else #if tweets -->
+{{/if}} <!-- else #if query -->
 <script src="/socket.io/socket.io.js"></script>
 <script>
   var socket = io();

@@ -44,7 +44,9 @@ router.get('/api/search', function(req, res, next)  {
           // insertQueryAndTweets(tweets, query, player, team, author);
           // connection.query("SELECT * FFROM query ORDER BY created_at DESC LIMIT 1", function(err, results, fields) {
           //   var query_id = results[0].query_id;
-            res.json({tweets: tweets, query_id: '0'});
+            res.json({
+              tweets: tweets,
+               query_id: '0'});
           // });
           // save results to remote DB
         });
@@ -57,13 +59,15 @@ router.get('/api/search', function(req, res, next)  {
           T.get('search/tweets', searchConfig, function(err, data, response) {
             console.log("Number of tweets from the API: " + data.statuses.length);
             var tweets = data.statuses;
+            console.log(tweets[0].text)
             // if (results.length > localTweets) {
             //   var remoteTweets = results.slice(- results.length + localTweets);
             //   console.log("number of tweets to be added from remote DB: " + remoteTweets.length);
             //   tweets = tweets.concat(remoteTweets);
             // }
             // insertQueryAndTweets(data.statuses, query, player, team, author);
-            res.json({tweets: tweets, query_id: query_id});
+            res.json({tweets: tweets,
+                      query_id: query_id});
           });
         });
       }

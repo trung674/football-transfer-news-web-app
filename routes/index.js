@@ -15,7 +15,8 @@ var moment = require('moment');
 var connection = require('../config/database');
 var T = require('../config/twitter.js');
 var sparqls = require( 'sparqling-star' );
-
+var ip = require("ip");
+console.dir ( ip.address() );
 /*
 connection.query('DELETE FROM query', function(error, results, fields) {
     if (error)
@@ -26,14 +27,14 @@ connection.query('DELETE FROM query', function(error, results, fields) {
 );
 
 
-connection.query('SELECT * FROM tweet', function(error, results, fields) {
+connection.query('SHOW VARIABLES WHERE Variable_name = "3000"', function(error, results, fields) {
     if (error)
         throw error;
-        //console.log(results)
+        console.log(results)
     }
 );
-*/
 
+*/
 
 module.exports = function(io) {
 

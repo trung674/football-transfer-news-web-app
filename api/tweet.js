@@ -10,27 +10,31 @@ router.get('/api/tweet', function(req, res, next)  {
     // res.send('respond with a resource');
 });
 
-router.get('/api/search', function(req, res, next)  {
-    var localTweets = req.params.lctweets;
+router.post('/api/search', function(req, res, next)  {
+    console.log('efe')
+    console.log(req.body);
+
+
+
     var basicKW = 'transfer OR buy OR bid OR moving OR move';
     var query = basicKW;
     var streamQuery = ''; // this is used to recieve new tweets
-    var queryOption = req.params.queryOption;
+    var queryOption = req.body.queryOption;
     var player;
     var team;
     var author;
-    if (req.params.player) {
-        player = req.params.player;
+    if (req.body.player) {
+        player = req.body.player;
         query = query + ' AND ' + splitQuery(player);
     } // + " OR " + completeQuery(player,1)
 
     if (req.params.team) {
-        team = req.params.team;
+        team = req.body.team;
         query = query + ' ' + queryOption +  ' ' + splitQuery(team);
     } // + " OR " + completeQuery(team,1)
 
-    if (req.params.author) {
-        author = req.params.author.replace(/@/g, "")
+    if (req.body.author) {
+        author = req.body.author.replace(/@/g, "")
         query = query + ' from:' + author; // add author to query
     }
 

@@ -13,7 +13,7 @@ by Thanh Trung, Omorhefere Imoloame and Mahesha Kulatunga.
 var app = require('../app');
 var debug = require('debug')('iw-assignment:server');
 var http = require('http');
-var ip = require("ip");
+
 
 
 /**
@@ -40,7 +40,7 @@ server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);
 console.log('The magic happens on port ' + port);
-console.log(ip.address());
+
 
 /**
  * Normalize a port into a number, string, or false.

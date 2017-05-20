@@ -41,7 +41,7 @@ router.post('/api/search', function(req, res, next)  {
             var searchConfig = {q: query, count: 100, exclude: 'retweets', lang: 'en'};
             // Only get 100 tweets instead of 300
             T.get('search/tweets', searchConfig, function(err, data, response) {
-                console.log("Number of tweets from the API: " + data.statuses.length);
+                console.log("1. Number of tweets from the API: " + data.statuses.length);
                 var tweets = data.statuses;
                 // Update data in remote DB
                 insertQueryAndTweets(tweets, query, player, team, author, function() {
@@ -58,8 +58,9 @@ router.post('/api/search', function(req, res, next)  {
             var lastSearched = moment(results[0].created_at).format("YYYY-MM-DD");
             var query_id = results[0].query_id;
             // Find the max tweet ID
-            connection.query("SELECT * FROM tweet WHERE query_id = '" + query_id + "'", function(error, results, fields) {
+            connection.query("SELECT * FROM tweet WHERE query_id = '" + query_id + "' LIMIT 100", function(error, results, fields) {
                 var lastMaxId = results[results.length - 1].tweet_id;
+                var dbTweets = results
                 // Only get 100 tweets instead of 300
                 var searchConfig = {since_id: lastMaxId, q: query, count: 100, exclude: 'retweets', lang: 'en', since: lastSearched};
                 T.get('search/tweets', searchConfig, function(err, data, response) {
@@ -77,7 +78,7 @@ router.post('/api/search', function(req, res, next)  {
                     // Update data in remote DB
                     insertQueryAndTweets(data.statuses, query, player, team, author, function() {
                         // Send JSON
-                        res.json({tweets: tweets, remoteTweets: remoteTweets, query_id: query_id});
+                        res.json({tweets: tweets, dbTweets: dbTweets, remoteTweets: remoteTweets, query_id: query_id});
                     });
                 });
             });

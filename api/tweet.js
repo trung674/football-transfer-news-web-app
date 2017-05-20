@@ -28,7 +28,7 @@ router.post('/api/search', function(req, res, next)  {
         query = query + ' AND ' + splitQuery(player);
     } // + " OR " + completeQuery(player,1)
 
-    if (req.params.team) {
+    if (req.body.team) {
         team = req.body.team;
         query = query + ' ' + queryOption +  ' ' + splitQuery(team);
     } // + " OR " + completeQuery(team,1)
@@ -45,33 +45,40 @@ router.post('/api/search', function(req, res, next)  {
         T.get('search/tweets', searchConfig, function(err, data, response) {
           console.log("Number of tweets from the API: " + data.statuses.length);
           var tweets = data.statuses;
-          // insertQueryAndTweets(tweets, query, player, team, author);
-          // connection.query("SELECT * FFROM query ORDER BY created_at DESC LIMIT 1", function(err, results, fields) {
-          //   var query_id = results[0].query_id;
-            res.json({
-              tweets: tweets,
-               query_id: '0'});
-          // });
-          // save results to remote DB
+          // Update data in remote DB
+          insertQueryAndTweets(tweets, query, player, team, author, function() {
+            connection.query("SELECT * FROM query ORDER BY created_at DESC LIMIT 1", function(err, results, fields) {
+              var query_id = results[0].query_id;
+              // send JSON
+              res.json({tweets: tweets, query_id: query_id, new: true});
+            });
+          });
         });
       } else {
+        var localTweets = req.body.localTweets;
         var lastSearched = moment(results[0].created_at).format("YYYY-MM-DD");
         var query_id = results[0].query_id;
         connection.query("SELECT * FROM tweet WHERE query_id = '" + query_id + "'", function(error, results, fields) {
           var lastMaxId = results[results.length - 1].tweet_id;
+          // Only get 100 tweets instead of 300
           var searchConfig = {since_id: lastMaxId, q: query, count: 100, exclude: 'retweets', lang: 'en', since: lastSearched};
           T.get('search/tweets', searchConfig, function(err, data, response) {
             console.log("Number of tweets from the API: " + data.statuses.length);
             var tweets = data.statuses;
-            console.log(tweets[0].text)
-            // if (results.length > localTweets) {
-            //   var remoteTweets = results.slice(- results.length + localTweets);
-            //   console.log("number of tweets to be added from remote DB: " + remoteTweets.length);
-            //   tweets = tweets.concat(remoteTweets);
-            // }
-            // insertQueryAndTweets(data.statuses, query, player, team, author);
-            res.json({tweets: tweets,
-                      query_id: query_id});
+            var remoteTweets = [];
+            console.log("local tweets: " + localTweets);
+            console.log("remote tweets: " + results.length);
+            // calculate the difference between the number of tweets in cordova DB and remote DB
+            if (results.length > localTweets) {
+              var temp = results.slice(- results.length + localTweets);
+              remoteTweets = remoteTweets.concat(temp);
+              console.log("Number of tweets to be added from remote DB to corcoda DB: " + remoteTweets.length);
+            }
+            // Update data in remote DB
+            insertQueryAndTweets(data.statuses, query, player, team, author, function() {
+              // Send JSON
+              res.json({tweets: tweets, remoteTweets: remoteTweets, query_id: query_id, new: false});
+            });
           });
         });
       }
@@ -96,7 +103,7 @@ function splitQuery(queryString) {
 
 function insertTweets(tweets, query) {
  // insert query into the database.
- connection.query("SELECT * FROM query WHERE query_text = '" + query + "'", function(error, results, fields){
+ connection.query("SELECT * FROM query WHERE query_text = '" + query + "'", function(error, results, fields) {
    var query_id = results[0].query_id;
    var tweetsArray = [];
    for (var tweet of tweets) {
@@ -119,7 +126,7 @@ function insertTweets(tweets, query) {
  });
 }
 
-function insertQueryAndTweets(tweets, query, player, team, author) {
+function insertQueryAndTweets(tweets, query, player, team, author, callback) {
  connection.query("SELECT * FROM query WHERE query_text = '" + query + "'", function(error, results, fields) {
    // check if query exists in database
    if (results.length === 0) { //if yes, add query to database
@@ -135,8 +142,9 @@ function insertQueryAndTweets(tweets, query, player, team, author) {
        } else {
          console.log("Successfully add query: " + query);
          if (tweets.length > 0) {
-           insertTweets(tweets, query);
+          insertTweets(tweets, query);
          }
+         if (callback) callback();
        }
      });
    } else { // if no, update the value of created_at field
@@ -148,6 +156,7 @@ function insertQueryAndTweets(tweets, query, player, team, author) {
          if (tweets.length > 0) {
            insertTweets(tweets, query);
          }
+         if (callback) callback();
        }
      });
    }

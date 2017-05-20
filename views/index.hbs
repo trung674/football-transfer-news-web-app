@@ -186,7 +186,7 @@
       var freqs = []
 
 
-      for (group = 0 ; group < data.length ; group++) {
+      for (group = 1 ; group < data.length ; group++) {
         var date = new Date(data[group][0].created_at).toDateString();
         var freq = data[group].length
         dates.push(date);

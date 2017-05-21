@@ -4,6 +4,8 @@ var connection = require('../config/database');
 var T = require('../config/twitter.js');
 var mysql = require('mysql');
 var moment = require('moment');
+var sparqls = require( 'sparqling-star' );
+
 
 router.get('/api/tweet', function(req, res, next)  {
     res.json({message: 'Hi from the web server :)'});
@@ -50,7 +52,15 @@ router.post('/api/search', function(req, res, next)  {
                       connection.query("SELECT * FROM query ORDER BY created_at DESC LIMIT 1", function(err, results, fields) {
                           var query_id = results[0].query_id;
                           // send JSON
-                          res.json({tweets: tweets, query_id: query_id, isFound: true});
+                          connection.query('SELECT DISTINCT player_ID FROM db_player_names WHERE player_name LIKE "%' + req.body.player + '%" OR player_twitter="' + req.body.author + '" LIMIT 1;', [req.body.player,req.body.author], function(error, results, fields) {
+                            console.log(results + "NEW")
+                            if (results.length === 0){
+                              res.json({tweets: tweets, query_id: query_id, isFound: true});
+                            }
+                            else {
+                              getDBPInfo(results[0].player_ID, tweets, null, null, query_id, true, res, false)
+                            }
+                          })
                       });
                   });
                 } else { // if 0 tweet returned
@@ -81,9 +91,16 @@ router.post('/api/search', function(req, res, next)  {
                         console.log("Number of tweets to be added from remote DB to corcoda DB: " + remoteTweets.length);
                     }
                     // Update data in remote DB
-                    insertQueryAndTweets(data.statuses, query, player, team, author, function() {
-                        // Send JSON
+                    connection.query('SELECT DISTINCT player_ID FROM db_player_names WHERE player_name LIKE "%' + req.body.player + '%" OR player_twitter="' + req.body.author + '" LIMIT 1;', [req.body.player,req.body.author], function(error, results, fields) {
+                      console.log(results)
+                      if (results.length === 0){
                         res.json({tweets: tweets, dbTweets: dbTweets, remoteTweets: remoteTweets, query_id: query_id, isFound: true});
+                      }
+                      else {
+                        getDBPInfo(results[0].player_ID, tweets, dbTweets, remoteTweets, query_id, true, res, false)
+                      }
+                    })
+                    insertQueryAndTweets(data.statuses, query, player, team, author, function() {
                     });
                 });
             });
@@ -167,4 +184,58 @@ function insertQueryAndTweets(tweets, query, player, team, author, callback) {
              });
          }
     });
+}
+
+function getDBPInfo(player_id, tweets, dbTweets, remoteTweets, query_id, isFound, res, newQuery) {
+    var myquery = new sparqls.Query({
+        'limit': 1
+    });
+
+    var DBplayer = {
+      	'dbo:wikiPageID': player_id,
+        'dbp:name': '?name',
+        'dbo:birthDate': '?birthDate',
+        'dbp:currentclub': '?currentclub',
+        'dbp:position': '?position'
+    };
+
+    myquery.registerVariable( 'DBplayer', DBplayer )
+       .registerPrefix( 'dbres', '<http://dbpedia.org/resource/>' )
+       .registerPrefix( 'dbowl', '<http://dbpedia.org/ontology/>' )
+       .registerPrefix( 'dbprop', '<http://dbpedia.org/property/>' )
+       //.selection( 'birthDate' )
+       ;
+
+    var sparqler = new sparqls.Client();
+    //console.log(myquery.sparqlQuery)
+    sparqler.send( myquery, function( error, data ) {
+
+            var db_player_name = data.results.bindings[0].name.value;
+            var db_player_dob = data.results.bindings[0].birthDate.value;
+            var db_position_uri = data.results.bindings[0].position.value;
+            var db_position = formatURI(db_position_uri);
+            var db_team_uri = data.results.bindings[0].currentclub.value;
+            var db_team = formatURI(db_team_uri);
+            var DBpediaInfo = {
+              playerInfo: [
+                {"name":db_player_name},
+                {"dob":db_player_dob},
+                {"team":db_team},
+                {"position":db_position}
+              ]};
+      console.log(DBpediaInfo)
+      if (newQuery){
+        res.json({tweets: tweets, query_id: query_id, isFound: isFound, DBpediaInfo: DBpediaInfo});
+      }
+      else {
+        res.json({tweets: tweets, dbTweets: dbTweets, remoteTweets: remoteTweets, query_id: query_id, isFound: isFound, DBpediaInfo: DBpediaInfo});
+      }
+    });
+}
+
+function formatURI(string) {
+    cutIndex = string.lastIndexOf("/");
+    string = string.substring(cutIndex+1, string.length);
+    string = string.replace(/_/g,' ')
+    return string;
 }

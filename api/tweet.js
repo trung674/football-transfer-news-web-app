@@ -43,24 +43,29 @@ router.post('/api/search', function(req, res, next)  {
             T.get('search/tweets', searchConfig, function(err, data, response) {
                 console.log("1. Number of tweets from the API: " + data.statuses.length);
                 var tweets = data.statuses;
-                // Update data in remote DB
-                insertQueryAndTweets(tweets, query, player, team, author, function() {
-                    // Find the query_id of the newest query in DB
-                    connection.query("SELECT * FROM query ORDER BY created_at DESC LIMIT 1", function(err, results, fields) {
-                        var query_id = results[0].query_id;
-                        // send JSON
-                        res.json({tweets: tweets, query_id: query_id});
-                    });
-                });
+                if (tweets.length !== 0) { // if there are tweets returned
+                  // Update data in remote DB
+                  insertQueryAndTweets(tweets, query, player, team, author, function() {
+                      // Find the query_id of the newest query in DB
+                      connection.query("SELECT * FROM query ORDER BY created_at DESC LIMIT 1", function(err, results, fields) {
+                          var query_id = results[0].query_id;
+                          // send JSON
+                          res.json({tweets: tweets, query_id: query_id, isFound: true});
+                      });
+                  });
+                } else { // if 0 tweet returned
+                  res.json({isFound: false});
+                }
+
             });
-        } else { // if query is already existed
+        } else { // query is already existed
             var localTweets = req.body.localTweets;
             var lastSearched = moment(results[0].created_at).format("YYYY-MM-DD");
             var query_id = results[0].query_id;
             // Find the max tweet ID
-            connection.query("SELECT * FROM tweet WHERE query_id = '" + query_id + "' LIMIT 100", function(error, results, fields) {
+            connection.query("SELECT * FROM tweet WHERE query_id = '" + query_id + "'", function(error, results, fields) {
                 var lastMaxId = results[results.length - 1].tweet_id;
-                var dbTweets = results
+                var dbTweets = results.slice(-100); // Get the last 100 tweets
                 // Only get 100 tweets instead of 300
                 var searchConfig = {since_id: lastMaxId, q: query, count: 100, exclude: 'retweets', lang: 'en', since: lastSearched};
                 T.get('search/tweets', searchConfig, function(err, data, response) {
@@ -78,7 +83,7 @@ router.post('/api/search', function(req, res, next)  {
                     // Update data in remote DB
                     insertQueryAndTweets(data.statuses, query, player, team, author, function() {
                         // Send JSON
-                        res.json({tweets: tweets, dbTweets: dbTweets, remoteTweets: remoteTweets, query_id: query_id});
+                        res.json({tweets: tweets, dbTweets: dbTweets, remoteTweets: remoteTweets, query_id: query_id, isFound: true});
                     });
                 });
             });

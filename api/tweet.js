@@ -12,8 +12,6 @@ router.get('/api/tweet', function(req, res, next)  {
 });
 
 router.post('/api/search', function(req, res, next)  {
-    console.log('efe')
-    console.log(req.body);
 
     // Contruct query
     var basicKW = 'transfer OR buy OR bid OR moving OR move';
@@ -52,13 +50,17 @@ router.post('/api/search', function(req, res, next)  {
                       connection.query("SELECT * FROM query ORDER BY created_at DESC LIMIT 1", function(err, results, fields) {
                           var query_id = results[0].query_id;
                           // send JSON
+                          var classifiedTweets = [];
+                          var dateList = findUniqueDates(tweets);
+                          classifiedTweets = classifyTweets(dateList, tweets, classifiedTweets);
+
                           connection.query('SELECT DISTINCT player_ID FROM db_player_names WHERE player_name LIKE "%' + req.body.player + '%" OR player_twitter="' + req.body.author + '" LIMIT 1;', [req.body.player,req.body.author], function(error, results, fields) {
                             console.log(results + "NEW")
                             if (results.length === 0){
-                              res.json({tweets: tweets, query_id: query_id, isFound: true});
+                              res.json({tweets: tweets, classifiedTweets: classifiedTweets, query_id: query_id, isFound: true});
                             }
                             else {
-                              getDBPInfo(results[0].player_ID, tweets, null, null, query_id, true, res, false)
+                              getDBPInfo(results[0].player_ID, tweets, null, null, classifiedTweets, query_id, true, res, true)
                             }
                           })
                       });
@@ -77,6 +79,8 @@ router.post('/api/search', function(req, res, next)  {
                 var lastMaxId = results[results.length - 1].tweet_id;
                 var dbTweets = results.slice(-100); // Get the last 100 tweets
                 // Only get 100 tweets instead of 300
+                //get all tweets for freq analysis
+                var tweetsToClassify = results;
                 var searchConfig = {since_id: lastMaxId, q: query, count: 100, exclude: 'retweets', lang: 'en', since: lastSearched};
                 T.get('search/tweets', searchConfig, function(err, data, response) {
                     console.log("Number of tweets from the API: " + data.statuses.length);
@@ -90,14 +94,18 @@ router.post('/api/search', function(req, res, next)  {
                         remoteTweets = remoteTweets.concat(temp);
                         console.log("Number of tweets to be added from remote DB to corcoda DB: " + remoteTweets.length);
                     }
+
+                    var classifiedTweets = [];
+                    var dateList = findUniqueDates(tweetsToClassify);
+                    classifiedTweets = classifyTweets(dateList, tweetsToClassify, classifiedTweets);
+
                     // Update data in remote DB
                     connection.query('SELECT DISTINCT player_ID FROM db_player_names WHERE player_name LIKE "%' + req.body.player + '%" OR player_twitter="' + req.body.author + '" LIMIT 1;', [req.body.player,req.body.author], function(error, results, fields) {
-                      console.log(results)
                       if (results.length === 0){
-                        res.json({tweets: tweets, dbTweets: dbTweets, remoteTweets: remoteTweets, query_id: query_id, isFound: true});
+                        res.json({tweets: tweets, dbTweets: dbTweets, remoteTweets: remoteTweets,classifiedTweets: classifiedTweets, query_id: query_id, isFound: true});
                       }
                       else {
-                        getDBPInfo(results[0].player_ID, tweets, dbTweets, remoteTweets, query_id, true, res, false)
+                        getDBPInfo(results[0].player_ID, tweets, dbTweets, remoteTweets, classifiedTweets, query_id, true, res, false)
                       }
                     })
                     insertQueryAndTweets(data.statuses, query, player, team, author, function() {
@@ -186,7 +194,7 @@ function insertQueryAndTweets(tweets, query, player, team, author, callback) {
     });
 }
 
-function getDBPInfo(player_id, tweets, dbTweets, remoteTweets, query_id, isFound, res, newQuery) {
+function getDBPInfo(player_id, tweets, dbTweets, remoteTweets, classifiedTweets, query_id, isFound, res, newQuery) {
     var myquery = new sparqls.Query({
         'limit': 1
     });
@@ -223,12 +231,11 @@ function getDBPInfo(player_id, tweets, dbTweets, remoteTweets, query_id, isFound
                 {"team":db_team},
                 {"position":db_position}
               ]};
-      console.log(DBpediaInfo)
       if (newQuery){
-        res.json({tweets: tweets, query_id: query_id, isFound: isFound, DBpediaInfo: DBpediaInfo});
+        res.json({tweets: tweets, classifiedTweets: classifiedTweets, query_id: query_id, isFound: isFound, DBpediaInfo: DBpediaInfo});
       }
       else {
-        res.json({tweets: tweets, dbTweets: dbTweets, remoteTweets: remoteTweets, query_id: query_id, isFound: isFound, DBpediaInfo: DBpediaInfo});
+        res.json({tweets: tweets, dbTweets: dbTweets, remoteTweets: remoteTweets, classifiedTweets: classifiedTweets, query_id: query_id, isFound: isFound, DBpediaInfo: DBpediaInfo});
       }
     });
 }
@@ -238,4 +245,31 @@ function formatURI(string) {
     string = string.substring(cutIndex+1, string.length);
     string = string.replace(/_/g,' ')
     return string;
+}
+
+function findUniqueDates(tweets) {
+    // return the dates that tweets were created
+    var array = tweets.map(function(tweet) {
+        return new Date(tweet.created_at);
+    });
+
+    var list = [array[0].getDate()];
+    for (var i = 1; i < array.length; i++) {
+        var date = array[i].getDate();
+        if (list.indexOf(date) == -1) {
+          list.push(date);
+        }
+    }
+    return list;
+}
+
+function classifyTweets(dates, tweets, array) {
+    //find frequency of recent tweets.
+    dates.forEach(function(date) {
+        var tempArray = tweets.filter(function(tweet) {
+            return (new Date(tweet.created_at).getDate() == date);
+        });
+        array.push(tempArray);
+    });
+    return array;
 }

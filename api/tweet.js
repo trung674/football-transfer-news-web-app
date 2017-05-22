@@ -90,7 +90,7 @@ router.post('/api/search', function(req, res, next)  {
                     console.log("Remote tweets: " + results.length);
                     // calculate the difference between the number of tweets in cordova DB and remote DB
                     if (results.length > localTweets) {
-                        var temp = results.slice(- results.length + localTweets);
+                        var temp = results.slice(localTweets - results.length);
                         remoteTweets = remoteTweets.concat(temp);
                         console.log("Number of tweets to be added from remote DB to corcoda DB: " + remoteTweets.length);
                     }

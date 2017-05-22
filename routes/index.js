@@ -321,7 +321,7 @@ function getRecAndRender(io, tweets, player, team, author, query, isExisted, req
     if (isExisted) {
         connection.query("SELECT * FROM tweet WHERE query_id ='" + query_id + "'", function(error, results, fields) {
           insertQueryAndTweets(tweets, query, player, team, author);
-          tweetsDB = tweetsDB.concat(results.reverse());
+          tweetsDB = tweetsDB.concat(results);
           tweets = tweets.concat(tweetsDB);
           var dateList = findUniqueDates(tweets);
           classifiedTweets = classifyTweets(dateList, tweets, classifiedTweets);

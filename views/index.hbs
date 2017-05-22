@@ -9,7 +9,7 @@
       <div class="panel">
         <div class="panel-body">
           {{#if message }}
-            <div class="alert alert-danger" role="alert">{{message}} is not allowd. Please try again !</div>
+            <div class="alert alert-danger" role="alert">{{message}} is not allowed. Please try again !</div>
           {{/if}}
           <form action="/" method="POST">
             <div class="form-group">
@@ -27,6 +27,14 @@
             <div class="form-group">
               <label for="teamName">Team</label>
               <input type="text" class="form-control" name="team" id="teamName" placeholder="eg. @manutd, #manutd">
+            </div>
+            <div class="radio">
+              <label class="radio-inline">
+                <input type="radio" name="fromOption" value="AND" checked> AND
+              </label>
+              <label class="radio-inline">
+                <input type="radio" name="fromOption" value="OR"> OR
+              </label>
             </div>
             <div class="form-group">
               <label for="authorName">From this account</label>
@@ -105,7 +113,6 @@
         {{#each tweets}}
           <div hidden class="col-md-12 tweet-container"  id='tweets-list'>
              <div class="panel panel-success">
-               <!-- Search team name via DBPedia I think -->
                <div class="panel-heading"><a href="https://www.twitter.com/{{this.user.screen_name}}" target="_blank">{{this.user.name}} @{{this.user.screen_name}}</a></div>
                <a class="tweet-text" href="https://www.twitter.com/{{this.user.screen_name}}/status/{{this.id_str}}" target="_blank"><div class="panel-body tweet-link-div">{{this.text}}</div></a>
                <div class="panel-success panel-footer">
@@ -122,7 +129,6 @@
           {{#each DBtweets}}
             <div hidden class="col-md-12 tweet-container">
                <div class="panel panel-success">
-                 <!-- Search team name via DBPedia I think -->
                  <div class="panel-heading"><a href="https://www.twitter.com/{{this.username}}" target="_blank">{{this.username}} @{{this.username}}</a></div>
                  <a class="tweet-text" href="https://www.twitter.com/{{this.user.screen_name}}/status/{{this.id_str}}" target="_blank"><div class="panel-body tweet-link-div">{{this.tweet_text}}</div></a>
                  <div class="panel-success panel-footer">
@@ -131,11 +137,7 @@
                </div>
              </div>
           {{/each}}
-        {{else}}
-          <div class="col-md-12 tweet-container">
-            <div class="alert alert-info" role="alert">No tweets found !</div>
-          </div>
-        {{/if}}
+        {{/if}} <!-- end #if DBtweets -->
         <button onclick="topFunction()" class="toTop" id="toTop" title="Go to top">Top</button>
         <button onclick="scrollUp()" class="upB" id="upB" title="Go up">&#8673; 5 tweets</button>
         <button onclick="scrollDown()" class="downB" id="downB" title="Go down">&#8675; 5 tweets</button>
@@ -165,7 +167,7 @@
                  <div class="panel-heading"><a href="https://www.twitter.com/{{this.username}}" target="_blank">{{this.username}} @{{this.username}}</a></div>
                  <a class="tweet-text" href="https://www.twitter.com/{{this.user.screen_name}}/status/{{this.id_str}}" target="_blank"><div class="panel-body tweet-link-div">{{this.tweet_text}}</div></a>
                  <div class="panel-success panel-footer">
-                   <p> Time and date: {{{formatDate this.created_at "DD-MM-YYYY"}}} </p>
+                   <p> Time and date: {{{formatDate this.created_at "DD-MM-YYYY HH:mm"}}} </p>
                  </div>
                </div>
              </div>
@@ -174,11 +176,11 @@
           <div class="col-md-12 tweet-container">
             <div class="alert alert-info" role="alert">No tweets found !</div>
           </div>
-        {{/if}}
+        {{/if}} <!-- end #if DBtweets -->
         <button onclick="topFunction()" class="toTop" id="toTop" title="Go to top">Top</button>
         <button onclick="scrollUp()" class="upB" id="upB" title="Go up">&#8673; 5 tweets</button>
         <button onclick="scrollDown()" class="downB" id="downB" title="Go down">&#8675; 5 tweets</button>
-      {{/if}}
+      {{/if}} <!-- end #if tweets -->
     <script>
     var socket = io();
     socket.on('graph_info', function(data){
@@ -214,6 +216,6 @@
       $('<div class="panel panel-info"> <div class="panel panel-info new-tweet"> <div class="panel-heading"><a href="https://www.twitter.com/{{' + data.user.screen_name + '}}" target="_blank">' + data.user.name + ' @' + data.user.screen_name + '</a></div> <a class="tweet-text" href="https://www.twitter.com/' + data.user.screen_name + '/status/'+ data.id_str + '" target="_blank"><div class="panel-body tweet-link-div">' + data.text + '</div></a> <div class="panel-success panel-footer"> <p> Time and date:' + data.created_at + '</p> </div> </div> </div>').prependTo($('#tweets-list'));
     });
     </script>
-    {{/if}}
+    {{/if}} <!-- end #if query -->
   </div>
 </div>

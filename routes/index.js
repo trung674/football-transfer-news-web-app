@@ -1,12 +1,13 @@
-/*
-Connecting to the twitter STREAMING and REST API
-Use REST API to get recent tweets
-Use STREAMING API to get tweets as they occur.
-Store tweets and queries in MySql database.
+/**
+ * Connecting to the twitter STREAMING and REST API
+ * Use REST API to get recent tweets related to the search request
+ * Use STREAMING API to get tweets as they occur.
+ * Store tweets and queries in MySql database.
+ *
+ * @author Thanh Trung, Omorhefere Imoloame and Mahesha Kulatunga
+ * @version 1.0.0
+ */
 
-by Thanh Trung, Omorhefere Imoloame and Mahesha Kulatunga.
-
-*/
 var express = require('express');
 var router = express.Router();
 require('dotenv').config();
@@ -16,41 +17,43 @@ var connection = require('../config/database');
 var T = require('../config/twitter.js');
 var sparqls = require( 'sparqling-star' );
 var ip = require("ip");
-console.dir ( ip.address() );
+console.dir(ip.address());
 
 module.exports = function(io) {
-
     /* GET home page. */
     router.get('/', function(req, res, next) {
         res.render('index', {title: 'EMT Football Tweets'});
     });
-    // post query
+
+    /* search form POST request. */
     router.post('/', function(req, res, next) {
         // Construct query
-        // transer keywords so only tweets relating to transfers are returned
-        var basicKW = 'transfer OR buy OR bid OR moving OR move';
+        var basicKW = 'transfer OR buy OR bid OR moving OR move'; // transer keywords so only tweets relating to transfers are returned
         var query = basicKW;
-        var streamQuery = ''; // this is used to recieve new tweets
+        var streamQuery = '';
         var queryOption = req.body.queryOption;
+        var fromOption = req.body.fromOption;
         var player;
         var team;
         var author;
+        // Add player to query
         if (req.body.player) {
             player = req.body.player;
             query = query + ' AND ' + splitQuery(player);
             streamQuery = 'transfer ' + player + ',buy ' + player + ',bid ' + player + ',moving ' + player + ',move ' + player // create query for the stream API
         }
-
+        // Add team to query
         if (req.body.team) {
             team = req.body.team;
             query = query + ' ' + queryOption +  ' ' + splitQuery(team);
             streamQuery = streamQuery + ' transfer ' + team + ',buy ' + team + ',bid ' + team + ',moving ' + team + ',move ' + team
         }
-
+        // Add author to query
         if (req.body.author) {
-            author = req.body.author.replace(/@/g, "")
-            query = query + ' from:' + author; // add author to query
+            author = req.body.author.replace(/@/g, "");
+            query = query + ' ' + fromOption + ' from:' + author; // add author to query
         }
+
         if (query !== basicKW) {
             if (req.body.api) {
                 console.log("REST query: " + query);
@@ -59,19 +62,19 @@ module.exports = function(io) {
                 //Initiate twittter tweet stream API and send new tweets to front end when recieved
                 io.on('connection', function(socket) {
                     //stream new tweets
-                    streamTweets(streamQuery, io)
+                    streamTweets(streamQuery, io);
                 });
 
                 // Get tweets from REST API with 4 iterations
                 var tweetCollection = [];
                 connection.query("SELECT * FROM query WHERE query_text = '" + query + "'", function(error, results, fields) {
-                    // if the query already existed in database, search with "since" and "since_id" property, else normal search
+                    // if the query already existed in database, search with "since" and "since_id" property
                     if (results.length === 1) {
-                        var query_id = results[0].query_id;
-                        var lastSearched = moment(results[0].created_at).format("YYYY-MM-DD");
+                        var query_id = results[0].query_id; // Get query_id of the existed query
+                        var lastSearched = moment(results[0].created_at).format("YYYY-MM-DD"); // Get the value for the "since" property
                         connection.query("SELECT tweet_id FROM tweet WHERE query_id = '" + query_id + "' ORDER BY created_at DESC LIMIT 1 ", function(error, results, fields) {
-                            var lastMaxId = results[0].tweet_id;
-                            // Search only next 100 tweets are enough I guess
+                            var lastMaxId = results[0].tweet_id; // Get the value for the "since_id" property
+                            // Search only next 100 tweets
                             T.get('search/tweets', {
                                 since_id: lastMaxId,
                                 q: query,
@@ -86,8 +89,8 @@ module.exports = function(io) {
                                 getRecAndRender(io, tweetCollection, player, team, author, query, true, req, res, query_id);
                             });
                         });
-                    } else {
-                      var options = {q: query, count: 100, exclude: 'retweets', lang: 'en'};
+                    } else {  // else normal search without "since" and "since_id" property
+                      var options = {q: query, count: 100, exclude: 'retweets', lang: 'en' }; // query options
                       T.get('search/tweets', options, function(err, data, response) {
                           console.log("First iteration: " + data.statuses.length);
                           if (data.statuses.length === 0) { // no tweets returned => render immediately
@@ -95,7 +98,7 @@ module.exports = function(io) {
                                 query: query,
                                 player: player,
                                 team: team,
-                                author  : author
+                                author: author
                               });
                           } else {
                               tweetCollection = tweetCollection.concat(data.statuses);
@@ -105,8 +108,8 @@ module.exports = function(io) {
                                   if (data1.statuses.length === 1) {
                                       getRecAndRender(io, tweetCollection, player, team, author, query, false, req, res);
                                   } else {
-                                      data1.statuses.shift();
-                                      tweetCollection = tweetCollection.concat(data1.statuses);
+                                      data1.statuses.shift(); // remove the first duplicate tweet
+                                      tweetCollection = tweetCollection.concat(data1.statuses); // Add result to the tweet collection
                                       options.max_id = data1.statuses.pop().id_str;
                                       T.get('search/tweets', options, function(err2, data2, response2) {
                                           console.log("Third iteration: " + data2.statuses.length);
@@ -114,7 +117,7 @@ module.exports = function(io) {
                                               getRecAndRender(io, tweetCollection, player, team, author, query, false, req, res);
                                           } else {
                                               data2.statuses.shift(); // remove the first duplicate tweet
-                                              tweetCollection = tweetCollection.concat(data2.statuses);
+                                              tweetCollection = tweetCollection.concat(data2.statuses); // Add result to the tweet collection
                                               options.max_id = data2.statuses.pop().id_str;
                                               T.get('search/tweets', options, function(err3, data3, response3) {
                                                   console.log("Fourth iteration : " + data3.statuses.length);
@@ -122,7 +125,7 @@ module.exports = function(io) {
                                                     getRecAndRender(io, tweetCollection, player, team, author, query, false, req, res);
                                                   } else {
                                                     data3.statuses.shift(); // remove the first duplicate tweet
-                                                    tweetCollection = tweetCollection.concat(data3.statuses);
+                                                    tweetCollection = tweetCollection.concat(data3.statuses); // Add result to the tweet collection
                                                     console.log("Total tweets from API: " + tweetCollection.length);
                                                     getRecAndRender(io, tweetCollection, player, team, author, query, false, req, res);
                                                   }
@@ -140,7 +143,7 @@ module.exports = function(io) {
                 console.log("Calling getDBResults")
                 getDBResults(io, player, team, query, req, res);
             }
-        } else {
+        } else {  // If no player or team or author is received from the POST request
             res.render('index', {message: 'Empty string'});
         }
     });
@@ -148,6 +151,11 @@ module.exports = function(io) {
     return router;
 };
 
+/**
+ * Get tweets from streaming API and stream them to the client via Socket.IO.
+ * @param {string} query - Query string.
+ * @param {module} io - Socket.IO module.
+ */
 function streamTweets(query, io) {
     // get new tweets according to query
     var stream = T.stream('statuses/filter', { track: query  });
@@ -158,9 +166,13 @@ function streamTweets(query, io) {
     });
 }
 
-// insert tweets into the database
+/**
+ * Insert tweets to the database
+ * @param {array} tweets - Array of tweets to be saved
+ * @param {string} query - Query string
+ */
 function insertTweets(tweets, query) {
-    // insert query into the database.
+    // Find query id corresponding to the query string
     connection.query("SELECT * FROM query WHERE query_text = '" + query + "'", function(error, results, fields) {
         var query_id = results[0].query_id;
         var tweetsArray = [];
@@ -169,10 +181,10 @@ function insertTweets(tweets, query) {
             var tweet_text = tweet.text // tweet text
             var username = tweet.user.screen_name // screen name of user who tweeted it
             var created_at = new Date(tweet.created_at) // when user tweeted it
-            var created_at_str = created_at.toISOString().substring(0, 19).replace('T', ' ') //why we need this ?
             var tweetArray = [tweet_id, tweet_text, username, created_at, query_id];
             tweetsArray.push(tweetArray);
         }
+        // Insert tweets to MySql using bulk insert
         var sql = "INSERT INTO tweet (tweet_id, tweet_text, username, created_at, query_id) VALUES ?";
         connection.query(sql, [tweetsArray], function(error) {
             if (error) {
@@ -184,7 +196,14 @@ function insertTweets(tweets, query) {
     });
 }
 
-// insert queries into the database
+/**
+ * Insert/Update query to the database.
+ * @param {array} tweets - Array of tweets to be saved.
+ * @param {string} query - Query string.
+ * @param {string} player - Player name.
+ * @param {string} team - Team name.
+ * @param {string} author - Author name.
+ */
 function insertQueryAndTweets(tweets, query, player, team, author) {
     connection.query("SELECT * FROM query WHERE query_text = '" + query + "'", function(error, results, fields) {
         // check if query is already existed in database
@@ -200,7 +219,7 @@ function insertQueryAndTweets(tweets, query, player, team, author) {
                   throw error;
               } else {
                 console.log("Successfully add query: " + query);
-                if (tweets.length > 0) {
+                if (tweets.length > 0) { // there are tweets returned from the API, call insertTweets function
                   insertTweets(tweets, query);
                 }
               }
@@ -211,7 +230,7 @@ function insertQueryAndTweets(tweets, query, player, team, author) {
                   throw error;
               } else {
                 console.log("Successfully update query " + query);
-                if (tweets.length > 0) {
+                if (tweets.length > 0) { // there are tweets returned from the API, call insertTweets function
                   insertTweets(tweets, query);
                 }
               }
@@ -220,7 +239,15 @@ function insertQueryAndTweets(tweets, query, player, team, author) {
     });
 }
 
-// function for offline searching, check if query in database
+/**
+ * Get tweets from the database for offline search request and render the HTML page with appropriate information.
+ * @param {module} io - Socket.IO module.
+ * @param {string} player - Player name.
+ * @param {string} team - Team name.
+ * @param {string} query - Query string.
+ * @param {object} req - Express request object.
+ * @param {object} res - Express response object.
+ */
 function getDBResults(io, player, team, query, req, res) {
     if (req.body.team !== '') {
         var id = [];
@@ -312,20 +339,33 @@ function getDBResults(io, player, team, query, req, res) {
     }
 }
 
-// collect tweets from API and render HTML page
+/**
+ * Get tweets from both the API and the database for online search request and render the HTML page with appropriate information
+ * @param {module} io - Socket.IO module.
+ * @param {array} tweets - Array of tweets from the API.
+ * @param {string} player - Player name.
+ * @param {string} team - Team name.
+ * @param {string} author - Author name.
+ * @param {string} query - Query string.
+ * @param {boolean} isExisted - Query string presence in the database.
+ * @param {object} req - Express request object.
+ * @param {object} res - Express response object.
+ * @param {string} query_id - Query ID in the database.
+ */
 function getRecAndRender(io, tweets, player, team, author, query, isExisted, req, res, query_id) {
     var classifiedTweets = [];
     var tweetsDB = [];
     var tweetsAPI = tweets;
 
-    if (isExisted) {
+    if (isExisted) { // Query string is already existed in the database
         connection.query("SELECT * FROM tweet WHERE query_id ='" + query_id + "'", function(error, results, fields) {
-          insertQueryAndTweets(tweets, query, player, team, author);
-          tweetsDB = tweetsDB.concat(results);
+          insertQueryAndTweets(tweets, query, player, team, author); // add/update query and tweets
+          tweetsDB = tweetsDB.concat(results); // add tweets found in the database to tweetsDB
+          // Frequency Analysis
           tweets = tweets.concat(tweetsDB);
           var dateList = findUniqueDates(tweets);
           classifiedTweets = classifyTweets(dateList, tweets, classifiedTweets);
-          if (req.body.team !== '') {
+          if (req.body.team !== '') { // if team name is not defined, find recommendations without team name
               var id = [];
               // find terms that are unique to to current query terms and render theem also
               connection.query('SELECT DISTINCT player_name,team FROM query WHERE player_name LIKE "%' + req.body.player + '%" AND team LIKE "%' + req.body.team + '%" ORDER BY created_at DESC LIMIT 3;', [req.body.player,req.body.team], function(error, results, fields) {
@@ -363,7 +403,7 @@ function getRecAndRender(io, tweets, player, team, author, query, isExisted, req
                     }
                 }
               });
-          } else {
+          } else { // else, find recommendations with team name
               var id = [];
               connection.query('SELECT DISTINCT player_name,team FROM query WHERE player_name LIKE "%' + req.body.player + '%" ORDER BY created_at DESC LIMIT 3;', req.body.player, function(error, results, fields) { // if only player name is given
                   if (error) {
@@ -400,11 +440,12 @@ function getRecAndRender(io, tweets, player, team, author, query, isExisted, req
               });
           }
         });
-    } else {
-        insertQueryAndTweets(tweets, query, player, team, author);
+    } else { // Query string is not existed in the database
+        insertQueryAndTweets(tweets, query, player, team, author); // add/update query and tweets
+        // Frequency Analysis
         var dateList = findUniqueDates(tweets);
         classifiedTweets = classifyTweets(dateList, tweets, classifiedTweets);
-        if (req.body.team !== '') {
+        if (req.body.team !== '') { // if team name is not defined, find recommendations without team name
             var id = [];
             // find terms that are unique to to current query terms and render theem also
             connection.query('SELECT DISTINCT player_name,team FROM query WHERE player_name LIKE "%' + req.body.player + '%" OR team LIKE "%' + req.body.team + '%" ORDER BY created_at DESC LIMIT 3;', [req.body.player,req.body.team], function(error, results, fields) {
@@ -436,7 +477,7 @@ function getRecAndRender(io, tweets, player, team, author, query, isExisted, req
                   });
                 }
             });
-          } else {
+          } else { // else, find recommendations with team name
               var id = [];
               connection.query('SELECT DISTINCT player_name,team FROM query WHERE player_name LIKE "%' + req.body.player + '%" ORDER BY created_at DESC LIMIT 3;', req.body.player, function(error, results, fields) { // if only player name is given
                   if (error) {
@@ -471,7 +512,6 @@ function getRecAndRender(io, tweets, player, team, author, query, isExisted, req
           }
       }
 }
-
 
 function getDBPInfo(io, player_id, fromCache, fromDB, query, player, team, tweetsAPI, author, tweetsDB, tweets, classifiedTweets, recommendations, moment, req, res) {
     var myquery = new sparqls.Query({
@@ -581,6 +621,11 @@ function formatURI(string) {
     return string;
 }
 
+/**
+ * Find a list of unique dates from a given tweet array.
+ * @param {array} tweets - Array of tweets.
+ * @return An array of dates.
+ */
 function findUniqueDates(tweets) {
     // return the dates that tweets were created
     var array = tweets.map(function(tweet) {
@@ -590,13 +635,19 @@ function findUniqueDates(tweets) {
     var list = [array[0].getDate()];
     for (var i = 1; i < array.length; i++) {
         var date = array[i].getDate();
-        if (list.indexOf(date) == -1) {
+        if (list.indexOf(date) == -1) { // if this date is not in the list, add it to the array
           list.push(date);
         }
     }
     return list;
 }
 
+/**
+ * For each date in the given array, find an array of tweets where 'created_at' property is the same as the corresponding date.
+ * @param {array} dates - Array of unique dates
+ * @param {array} tweets - Array of tweets
+ * @return arrays of classified tweets
+ */
 function classifyTweets(dates, tweets, array) {
     //find frequency of recent tweets.
     dates.forEach(function(date) {
@@ -608,10 +659,16 @@ function classifyTweets(dates, tweets, array) {
     return array;
 }
 
+/**
+ * Contruct query from a given player/team query.
+ * @param {string} queryString - Array of unique dates.
+ * @return Arrays of classified tweets.
+ */
 function splitQuery(queryString) {
-    var words = queryString.split(",");
+    var words = queryString.split(","); // split at comma
     var fullQuery = "";
 
+    // Contruct query string
     for (var i = 0; i < words.length; i++) {
         if (i === words.length - 1) {
             fullQuery = fullQuery + words[i];

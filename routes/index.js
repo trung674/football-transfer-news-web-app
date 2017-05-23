@@ -241,7 +241,7 @@ function insertQueryAndTweets(tweets, query, player, team, author) {
 
 /**
  * Get tweets from the database for offline search request and render the HTML page with appropriate information.
- * @param {module} io - Socket.IO module.
+ * @param {object} io - Socket.IO module.
  * @param {string} player - Player name.
  * @param {string} team - Team name.
  * @param {string} query - Query string.
@@ -341,7 +341,7 @@ function getDBResults(io, player, team, query, req, res) {
 
 /**
  * Get tweets from both the API and the database for online search request and render the HTML page with appropriate information
- * @param {module} io - Socket.IO module.
+ * @param {object} io - Socket.IO module.
  * @param {array} tweets - Array of tweets from the API.
  * @param {string} player - Player name.
  * @param {string} team - Team name.

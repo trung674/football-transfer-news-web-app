@@ -232,7 +232,6 @@ function getDBPInfo(player_id, tweets, dbTweets, remoteTweets, classifiedTweets,
     var myquery = new sparqls.Query({
         'limit': 1
     });
-
     var DBplayer = {
       	'dbo:wikiPageID': player_id,
         'dbp:name': '?name',
@@ -251,7 +250,7 @@ function getDBPInfo(player_id, tweets, dbTweets, remoteTweets, classifiedTweets,
     var sparqler = new sparqls.Client();
     //console.log(myquery.sparqlQuery)
     sparqler.send( myquery, function( error, data ) {
-
+      if (data.results.bindings[0] !== undefined) { //Catch for players you have recently retired causing errors(eg John Terry)
             var db_player_name = data.results.bindings[0].name.value;
             var db_player_dob = data.results.bindings[0].birthDate.value;
             var db_position_uri = data.results.bindings[0].position.value;
@@ -265,6 +264,10 @@ function getDBPInfo(player_id, tweets, dbTweets, remoteTweets, classifiedTweets,
                 {"team":db_team},
                 {"position":db_position}
               ]};
+            }
+            else {
+              var DBpediaInfo = null;
+            }
       if (newQuery){
         res.json({tweets: tweets, classifiedTweets: classifiedTweets, query_id: query_id, isFound: isFound, DBpediaInfo: DBpediaInfo});
       }

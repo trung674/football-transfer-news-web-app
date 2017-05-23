@@ -3,7 +3,6 @@
     <div class="container-fluid">
       <h3 class="text-center main-heading"><img alt="Logo" style="height: 35px;" src="/images/logo.png">Football Tweets</h3>
   </nav>
- {{! This is the box where tweets will be displye. }}
   <div class="row">
     <div class="col-md-4 col-md-offset-2 search-section">
       <div class="panel">
@@ -53,7 +52,7 @@
         </div>
       </div>
     </div>
-    <div class="col-md-6 search-section">
+    <div class="responsive col-sm-6 search-section">
       {{#if DBpediaInfo}}
       <div class="col-sm-5 hidden-sm hidden-xs">
         <img class="img-responsive" src="{{DBpediaInfo.playerInfo.4.thumbnail}}" alt="Player_Image" width="200px" style="margin-top:10%;">
@@ -67,7 +66,9 @@
       {{else}}
         <h1 class='tip'>Get Started</h1>
         <ul class='tips'>
-          <li>To receive new tweets click the live checkbox</li>
+          <li>To receive new tweets ensure live box is ticked</li>
+          <li>To only query our database untick the live box</li>
+          <li>Recommended keywords will be suggested after a query</li>
           <li>Toggle between AND/OR to refine your search</li>
           <li>Some players have DBPedia info that will be displayed here</li>
         </ul>
@@ -111,7 +112,7 @@
         </div>
         <!-- Display Tweets  -->
         {{#each tweets}}
-          <div hidden class="col-md-12 tweet-container"  id='tweets-list'>
+          <div hidden class="col-md-12 tweet-container responsive"  id='tweets-list'>
              <div class="panel panel-success">
                <div class="panel-heading"><a href="https://www.twitter.com/{{this.user.screen_name}}" target="_blank">{{this.user.name}} @{{this.user.screen_name}}</a></div>
                <a class="tweet-text" href="https://www.twitter.com/{{this.user.screen_name}}/status/{{this.id_str}}" target="_blank"><div class="panel-body tweet-link-div">{{this.text}}</div></a>
@@ -123,14 +124,14 @@
         {{/each}}
         {{#if DBtweets}}
           <div class="col-md-12 tweet-container">
-              <div class="alert alert-info" role="alert">Below is another {{tweetsDB}} tweets about this query in the database !</div>
+              <div class="alert alert-info" role="alert">Below is another {{tweetsDB}} tweets about this query in our database !</div>
           </div>
           <!-- Display Tweets  -->
           {{#each DBtweets}}
-            <div hidden class="col-md-12 tweet-container">
+            <div hidden class="col-md-12 tweet-container responsive">
                <div class="panel panel-success">
-                 <div class="panel-heading"><a href="https://www.twitter.com/{{this.username}}" target="_blank">{{this.username}} @{{this.username}}</a></div>
-                 <a class="tweet-text" href="https://www.twitter.com/{{this.user.screen_name}}/status/{{this.id_str}}" target="_blank"><div class="panel-body tweet-link-div">{{this.tweet_text}}</div></a>
+                 <div class="panel-heading"><a href="https://www.twitter.com/{{this.username}}" target="_blank">@{{this.username}}</a></div>
+                 <a class="tweet-text" href="https://www.twitter.com/{{this.username}}/status/{{this.tweet_id}}" target="_blank"><div class="panel-body tweet-link-div" style="display:block; overflow:auto;">{{this.tweet_text}}</div></a>
                  <div class="panel-success panel-footer">
                    <p> Time and date: {{{formatDate this.created_at "DD-MM-YYYY"}}} </p>
                  </div>
@@ -158,14 +159,13 @@
           </div>
           <!-- Display Tweets  -->
           <div class="col-md-12 tweet-container">
-              <div class="alert alert-info" role="alert">There are {{DBtweets.length}} tweets about this query in the database !</div>
+              <div class="alert alert-info" role="alert">No new tweets! Here are {{DBtweets.length}} tweets from our database</div>
           </div>
           {{#each DBtweets}}
-            <div hidden class="col-md-12 tweet-container">
+            <div hidden class="col-md-12 tweet-container responsive">
                <div class="panel panel-success">
-                 <!-- Search team name via DBPedia I think -->
-                 <div class="panel-heading"><a href="https://www.twitter.com/{{this.username}}" target="_blank">{{this.username}} @{{this.username}}</a></div>
-                 <a class="tweet-text" href="https://www.twitter.com/{{this.user.screen_name}}/status/{{this.id_str}}" target="_blank"><div class="panel-body tweet-link-div">{{this.tweet_text}}</div></a>
+                 <div class="panel-heading"><a href="https://www.twitter.com/{{this.username}}" target="_blank">@{{this.username}}</a></div>
+                 <a class="tweet-text" href="https://www.twitter.com/{{this.username}}/status/{{this.tweet_id}}" target="_blank"><div class="panel-body tweet-link-div">{{this.tweet_text}}</div></a>
                  <div class="panel-success panel-footer">
                    <p> Time and date: {{{formatDate this.created_at "DD-MM-YYYY HH:mm"}}} </p>
                  </div>
@@ -188,7 +188,7 @@
       var freqs = []
 
 
-      for (group = 1 ; group < data.length ; group++) {
+      for (group = 0 ; group < data.length ; group++) {
         var date = new Date(data[group][0].created_at).toDateString();
         var freq = data[group].length
         dates.push(date);
@@ -200,7 +200,7 @@
         type: 'line',
         responsive: true,
         data: {
-          labels: dates,
+          labels: dates.reverse(),
           datasets: [{
             label: 'Number of Tweets',
             data: freqs,

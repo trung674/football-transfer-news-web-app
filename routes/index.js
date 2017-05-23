@@ -554,14 +554,7 @@ function getDBPInfo(io, player_id, fromCache, fromDB, query, player, team, tweet
                 {"thumbnail":db_thumbnail}
               ]};
         } else {
-            var DBpediaInfo = {
-              playerInfo: [
-            {"name":''},
-            {"dob":''},
-            {"team":''},
-            {"position":''},
-            {"thumbnail":''}
-            ]}
+            var DBpediaInfo = null
         }
 
         if (fromCache) {

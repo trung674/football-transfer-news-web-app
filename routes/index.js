@@ -513,11 +513,31 @@ function getRecAndRender(io, tweets, player, team, author, query, isExisted, req
       }
 }
 
+/**
+ * Query DBPedia if player is in Lookuptable, attaches and sends dbpedia info to front end
+ * @param {object} io - Socket io object for graph data emit
+ * @param {string} player_id Wikidata ID for player from lookup table
+ * @param {bool} fromCache - Distinguises when tweets being searched from cache
+ * @param {bool} fromDB - Distinguishes when tweets being searched only form database
+ * @param {string} query - full query being searched
+ * @param {string} player - player being searched for
+ * @param {string} team - team being searched for
+ * @param {array} tweetAPI - New tweets from API when using cache
+ * @param {string} author - author being searched for
+ * @param {array} tweetDB - Array of tweets from database
+ * @param {array} tweets - New query tweets just from API
+ * @param {array} classifiedTweets - Array of classifiedTweets for frequency analysis
+ * @param {bool} recommendations - List of recommended search terms
+ * @param {object} moment - Moment npm object to format date/time
+ * @param {object} req - Get request
+ * @param {object} res - Get request results
+ */
 function getDBPInfo(io, player_id, fromCache, fromDB, query, player, team, tweetsAPI, author, tweetsDB, tweets, classifiedTweets, recommendations, moment, req, res) {
-    var myquery = new sparqls.Query({
+    //Declare query
+    var playerQuery = new sparqls.Query({
         'limit': 1
     });
-
+    //Declare fields to be retrived
     var DBplayer = {
       	'dbo:wikiPageID': player_id,
         'dbp:name': '?name',
@@ -526,18 +546,16 @@ function getDBPInfo(io, player_id, fromCache, fromDB, query, player, team, tweet
         'dbp:position': '?position',
         'dbo:thumbnail': '?thumbnail'
     };
-
-    myquery.registerVariable( 'DBplayer', DBplayer )
+    // Register DBPedia variables
+    playerQuery.registerVariable( 'DBplayer', DBplayer )
        .registerPrefix( 'dbres', '<http://dbpedia.org/resource/>' )
        .registerPrefix( 'dbowl', '<http://dbpedia.org/ontology/>' )
        .registerPrefix( 'dbprop', '<http://dbpedia.org/property/>' )
-       //.selection( 'birthDate' )
        ;
-
+    // Query DBPedia
     var sparqler = new sparqls.Client();
-    //console.log(myquery.sparqlQuery)
-    sparqler.send( myquery, function( error, data ) {
-        if (data.results.bindings[0] !== undefined) {
+    sparqler.send( playerQuery, function( error, data ) {
+        if (data.results.bindings[0] !== undefined) { //Catch for players that have no thumbnail in DBpedia
             var db_player_name = data.results.bindings[0].name.value;
             var db_player_dob = data.results.bindings[0].birthDate.value;
             var db_position_uri = data.results.bindings[0].position.value;
@@ -556,7 +574,7 @@ function getDBPInfo(io, player_id, fromCache, fromDB, query, player, team, tweet
         } else {
             var DBpediaInfo = null
         }
-
+        //Send to front end with parameters depending on the search case (From DB only, new query, old quer (ie. new tweets + cache))
         if (fromCache) {
             io.on('connection', function(socket) {
               io.emit('graph_info', classifiedTweets);
@@ -606,7 +624,10 @@ function getDBPInfo(io, player_id, fromCache, fromDB, query, player, team, tweet
         }
     });
 }
-
+/**
+ * Formats URIS from DBPedia results to extract names to display (To limit queries to DBPedia)
+ * @param {string} string - URI String to be formated
+ */
 function formatURI(string) {
     cutIndex = string.lastIndexOf("/");
     string = string.substring(cutIndex+1, string.length);

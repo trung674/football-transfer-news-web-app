@@ -228,10 +228,24 @@ function insertQueryAndTweets(tweets, query, player, team, author, callback) {
     });
 }
 
+/**
+ * Query DBPedia if player is in Lookuptable, attaches and sends dbpedia info to front end
+ * @param {string} player_id Wikidata ID for player from lookup table
+ * @param {array} tweets - Array of tweets
+ * @param {array} classifiedTweets - Array of classifiedTweets for frequency analysis
+ * @param {array} dbTweets - Array of tweets from local database
+ * @param {array} remoteTweets - array of tweets from remote database
+ * @param {string} query_id - Max tweet id
+ * @param {bool} isFound - Distinguishes between queries that have NEW tweets
+ * @param {object} res - Post request results
+ * @param {bool} newQuery - Distinguishes between new queries and previously added queries
+ */
 function getDBPInfo(player_id, tweets, dbTweets, remoteTweets, classifiedTweets, query_id, isFound, res, newQuery) {
-    var myquery = new sparqls.Query({
+   //Declare query
+    var playerQuery = new sparqls.Query({
         'limit': 1
     });
+    //Declare fields to be retrived
     var DBplayer = {
       	'dbo:wikiPageID': player_id,
         'dbp:name': '?name',
@@ -239,18 +253,17 @@ function getDBPInfo(player_id, tweets, dbTweets, remoteTweets, classifiedTweets,
         'dbp:currentclub': '?currentclub',
         'dbp:position': '?position'
     };
-
-    myquery.registerVariable( 'DBplayer', DBplayer )
+    // Register DBPedia variables
+    playerQuery.registerVariable( 'DBplayer', DBplayer )
        .registerPrefix( 'dbres', '<http://dbpedia.org/resource/>' )
        .registerPrefix( 'dbowl', '<http://dbpedia.org/ontology/>' )
        .registerPrefix( 'dbprop', '<http://dbpedia.org/property/>' )
-       //.selection( 'birthDate' )
        ;
 
     var sparqler = new sparqls.Client();
-    //console.log(myquery.sparqlQuery)
-    sparqler.send( myquery, function( error, data ) {
-      if (data.results.bindings[0] !== undefined) { //Catch for players you have recently retired causing errors(eg John Terry)
+    // Query DBPedia
+    sparqler.send( playerQuery, function( error, data ) {
+      if (data.results.bindings[0] !== undefined) { //Catch for players that have recently retired causing errors(eg John Terry)
             var db_player_name = data.results.bindings[0].name.value;
             var db_player_dob = data.results.bindings[0].birthDate.value;
             var db_position_uri = data.results.bindings[0].position.value;
@@ -269,14 +282,20 @@ function getDBPInfo(player_id, tweets, dbTweets, remoteTweets, classifiedTweets,
               var DBpediaInfo = null;
             }
       if (newQuery){
+        //Send to front end with newQuery parameters
         res.json({tweets: tweets, classifiedTweets: classifiedTweets, query_id: query_id, isFound: isFound, DBpediaInfo: DBpediaInfo});
       }
       else {
+        //Send to front end with old query parameters
         res.json({tweets: tweets, dbTweets: dbTweets, remoteTweets: remoteTweets, classifiedTweets: classifiedTweets, query_id: query_id, isFound: isFound, DBpediaInfo: DBpediaInfo});
       }
     });
 }
 
+/**
+ * Formats URIS from DBPedia results to extract names to display (To limit queries to DBPedia)
+ * @param {string} string - URI String to be formated
+ */
 function formatURI(string) {
     cutIndex = string.lastIndexOf("/");
     string = string.substring(cutIndex+1, string.length);

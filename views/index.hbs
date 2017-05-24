@@ -1,15 +1,24 @@
+<!--
+Webapp main page
+@author Thanh Trung, Omorhefere Imoloame and Mahesha Kulatunga  @version 1.0.0
+-->
 <div class="container">
+  <!--  Navbar section  -->
   <nav class="navbar navbar-default navbar-fixed-top">
     <div class="container-fluid">
       <h3 class="text-center main-heading"><img alt="Logo" style="height: 35px;" src="/images/logo.png">Football Tweets</h3>
   </nav>
+  <!-- Main body -->
   <div class="row">
+    <!-- Search form section -->
     <div class="col-md-4 col-md-offset-2 search-section">
       <div class="panel">
         <div class="panel-body">
+            <!-- If no query given -->
           {{#if message }}
             <div class="alert alert-danger" role="alert">{{message}} is not allowed. Please try again !</div>
           {{/if}}
+            <!-- Search form -->
           <form action="/" method="POST">
             <div class="form-group">
               <label for="playerName">Player</label>
@@ -52,6 +61,7 @@
         </div>
       </div>
     </div>
+      <!-- Dbpedia info / Tips sections -->
     <div class="responsive col-sm-6 search-section">
       {{#if DBpediaInfo}}
       <div class="col-sm-5 hidden-sm hidden-xs">
@@ -70,10 +80,12 @@
           <li>To only query our database untick the live box</li>
           <li>Recommended keywords will be suggested after a query</li>
           <li>Toggle between AND/OR to refine your search</li>
+          <li>To search for multiple in each field, add AND/OR between terms</li>
           <li>Some players have DBPedia info that will be displayed here</li>
         </ul>
       {{/if}}
     </div>
+      <!-- Recommendations section -->
     {{#if recommendations}} {{! These are the recommended searches that are based on your query. }}
     <div class = "container col-sm-12">
       <ol class="rec-list">
@@ -181,6 +193,7 @@
         <button onclick="scrollUp()" class="upB" id="upB" title="Go up">&#8673; 5 tweets</button>
         <button onclick="scrollDown()" class="downB" id="downB" title="Go down">&#8675; 5 tweets</button>
       {{/if}} <!-- end #if tweets -->
+        <!-- Socket io for graph and streamed in tweets -->
     <script>
     var socket = io();
     socket.on('graph_info', function(data){

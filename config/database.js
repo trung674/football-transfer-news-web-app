@@ -7,14 +7,14 @@
 
 var mysql = require('mysql');
 
-var connection = mysql.createConnection({host: 'stusql.dcs.shef.ac.uk', user: 'team087', password: 'c827b3fd', database: 'team087', acquireTimeout: 5000000});//Configure the database
+var connection = mysql.createConnection({host: 'stusql.dcs.shef.ac.uk', user: 'team087', password: 'c827b3fd', database: 'team087', connectTimeout: 300000});//Configure the database
 
 function dbConnect(connection){
   connection.connect(function(err) { //Connect the database.
       if (err) {
           console.log(err.code)
           console.log('Error connecting to Db' + err);
-          connection = mysql.createConnection({host: 'stusql.dcs.shef.ac.uk', user: 'team087', password: 'c827b3fd', database: 'team087', acquireTimeout: 5000000});//Configure the database
+          connection = mysql.createConnection({host: 'stusql.dcs.shef.ac.uk', user: 'team087', password: 'c827b3fd', database: 'team087', connectTimeout: 300000});//Configure the database
           dbConnect(connection);
       }
 

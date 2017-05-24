@@ -632,7 +632,7 @@ function findUniqueDates(tweets) {
           list.push(date);
         }
     }
-    return list;
+    return list.sort();
 }
 
 /**

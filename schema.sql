@@ -1,4 +1,4 @@
--- MySQL dump 10.13  Distrib 5.7.17, for osx10.12 (x86_64)
+-- MySQL dump 10.10
 --
 -- Host: stusql.dcs.shef.ac.uk    Database: team087
 -- ------------------------------------------------------
@@ -16,44 +16,52 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
+-- Table structure for table `db_player_names`
+--
+
+DROP TABLE IF EXISTS `db_player_names`;
+CREATE TABLE `db_player_names` (
+  `player_ID` int(11) NOT NULL,
+  `player_name` varchar(70) NOT NULL,
+  `player_twitter` varchar(45) DEFAULT NULL,
+  PRIMARY KEY (`player_ID`),
+  UNIQUE KEY `player_ID_UNIQUE` (`player_ID`),
+  UNIQUE KEY `player_twitter_UNIQUE` (`player_twitter`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+--
 -- Table structure for table `query`
 --
 
 DROP TABLE IF EXISTS `query`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `query` (
   `query_id` int(11) NOT NULL AUTO_INCREMENT,
-  `query_text` varchar(100) NOT NULL,
-  `player_name` varchar(50) DEFAULT NULL,
-  `team` varchar(25) DEFAULT NULL,
+  `query_text` varchar(200) DEFAULT NULL,
+  `player_name` varchar(100) DEFAULT NULL,
+  `team` varchar(100) DEFAULT NULL,
   `author` varchar(20) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`query_id`),
   UNIQUE KEY `query_id_UNIQUE` (`query_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=422 DEFAULT CHARSET=latin1;
-/*!40101 SET character_set_client = @saved_cs_client */;
+) ENGINE=InnoDB AUTO_INCREMENT=36 DEFAULT CHARSET=latin1;
 
 --
 -- Table structure for table `tweet`
 --
 
 DROP TABLE IF EXISTS `tweet`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `tweet` (
+  `id` int(10) NOT NULL AUTO_INCREMENT,
   `tweet_id` varchar(30) NOT NULL,
   `tweet_text` tinytext NOT NULL,
   `username` varchar(20) NOT NULL,
   `created_at` datetime NOT NULL,
   `retrieved_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `query_id` int(11) DEFAULT NULL,
-  PRIMARY KEY (`tweet_id`),
-  UNIQUE KEY `tweet_id_UNIQUE` (`tweet_id`),
+  PRIMARY KEY (`id`),
   KEY `query_id_idx` (`query_id`),
   CONSTRAINT `query_id` FOREIGN KEY (`query_id`) REFERENCES `query` (`query_id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-/*!40101 SET character_set_client = @saved_cs_client */;
+) ENGINE=InnoDB AUTO_INCREMENT=14123 DEFAULT CHARSET=latin1;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -64,4 +72,4 @@ CREATE TABLE `tweet` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2017-03-31 22:45:36
+-- Dump completed on 2017-05-24 15:20:52

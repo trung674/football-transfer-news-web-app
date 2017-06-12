@@ -1,4 +1,4 @@
-# COM3504 The Intelligent Web Assignment
+# COM3504 The Intelligent Web Assignment - Part 1
 
 ## Introduction
 

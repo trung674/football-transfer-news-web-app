@@ -6,17 +6,19 @@ The goal is to develop a web applcation with **[Nodejs](https://github.com/nodej
 
 If a query mentioning a football player whose name appears in the database, additional information about this player, such as his current football club name, his date of birth and his twitter screen name, will be retrieved from **[DBPedia](http://wiki.dbpedia.org/)** using **[SPARQL](https://en.wikipedia.org/wiki/SPARQL)**.
 
-## How to run
-1. Change the MySql database configuration in `config/database.js`
-2. Create a `.env` file with the following information:
+## Installation
+1. Clone this repo
+2. Move to the app folder in the terminal using `cd` command
+3. Change the MySql database configuration in `config/database.js`
+4. Create a `.env` file with the following information:
     ```
     TWIT_CONSUMER_KEY=<Your Twitter Consumer Key>
     TWIT_CONSUMER_SECRET=<Your Twitter Consumer Secret>
     TWIT_ACCESS=<Your Twitter Access Key>
     TWIT_ACCES_SECRET=<Your Twitter Access Secret>
     ```
-3. Run `npm install`.
-4. Run `npm start` and open `localhost:3000` in your browser of choice.
+5. Run `npm install`.
+6. Run `npm start` and open `localhost:3000` in your browser of choice.
 
 ## Authors
 - [MaheshaKulatunga](https://github.com/MaheshaKulatunga)

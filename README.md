@@ -6,6 +6,9 @@ The goal is to develop a web applcation with **[Nodejs](https://github.com/nodej
 
 If a query mentioning a football player whose name appears in the database, additional information about this player, such as his current football club name, his date of birth and his twitter screen name, will be retrieved from **[DBPedia](http://wiki.dbpedia.org/)** using **[SPARQL](https://en.wikipedia.org/wiki/SPARQL)**.
 
+## Prerequisite
+- Nodejs (version >= 6.10.1).
+
 ## Installation
 1. Clone this repo
 2. Move to the app folder in the terminal using `cd` command
